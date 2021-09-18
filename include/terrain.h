@@ -22,6 +22,7 @@ public:
     struct Element {
         Eigen::Vector2d pos;
         std::vector<Eigen::Vector2d> vertices;
+        Element(): pos(0,0), vertices() {}
         void add_vertex(double x, double y) {
             vertices.push_back(Eigen::Vector2d(x, y));
         }
