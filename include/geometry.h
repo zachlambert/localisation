@@ -88,4 +88,9 @@ Velocity transform_to_twist(const Pose& pose);
 
 Eigen::Vector2d transform_point(const Pose& pose, const Eigen::Vector2d& point);
 
+inline Eigen::Vector2d get_direction(double angle)
+{
+    return Eigen::Vector2d(std::cos(angle), std::sin(angle));
+}
+
 #endif

@@ -121,9 +121,6 @@ void add_marker(
     double d2 = d3 - t / std::sqrt(2);
 
     std::vector<Eigen::Vector2d> vertices;
-    //vertices.push_back(Eigen::Vector2d(0, 0));
-    //vertices.push_back(Eigen::Vector2d(size, size));
-    //vertices.push_back(Eigen::Vector2d(size, 0));
     vertices.push_back(Eigen::Vector2d(-d1, 0));
     vertices.push_back(Eigen::Vector2d(-d3, d2));
     vertices.push_back(Eigen::Vector2d(-d2, d3));

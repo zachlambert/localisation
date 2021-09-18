@@ -16,10 +16,9 @@ void LaserScan::sample(const Pose &pose, const Terrain &terrain)
     to_render.measurements.setPrimitiveType(sf::Triangles);
     to_render.measurements.clear();
     for (size_t i = 0; i < y.size(); i++) {
-        double angle = i*2*M_PI/n;
         add_marker(
             to_render.measurements,
-            y(i) * Eigen::Vector2d(std::cos(angle), std::sin(angle)),
+            y(i) * get_direction(i*2*M_PI/n),
             marker_size,
             marker_color
         );
