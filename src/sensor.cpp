@@ -18,7 +18,7 @@ void LaserScan::sample(const Pose &pose, const Terrain &terrain)
     for (size_t i = 0; i < y.size(); i++) {
         add_marker(
             to_render.measurements,
-            y(i) * get_direction(i*2*M_PI/n),
+            pose.position() + y(i) * get_direction(pose.orientation() + i*2*M_PI/n),
             marker_size,
             marker_color
         );

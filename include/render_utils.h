@@ -18,4 +18,11 @@ void add_marker(
     double size,
     sf::Color color);
 
+void add_circle_mesh(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double radius,
+    sf::Color color,
+    size_t n=20);
+
 #endif

@@ -5,6 +5,7 @@
 #include "robot.h"
 #include "sensor.h"
 #include "terrain.h"
+#include "render_utils.h"
 
 
 int main()
@@ -26,7 +27,11 @@ int main()
     LaserScan scan(100);
     scan.sample(robot.pose, terrain);
 
-    Eigen::Vector2d target(-3, 3);
+    Pose target;
+    target.position() = Eigen::Vector2d(-3, 3);
+    sf::VertexArray target_marker;
+    target_marker.setPrimitiveType(sf::Triangles);
+    add_marker(target_marker, Eigen::Vector2d::Zero(), 0.5, sf::Color::Red);
 
     while (window.isOpen()) {
         sf::Event event;
@@ -41,11 +46,27 @@ int main()
                     scan.sample(robot.pose, terrain);
                 }
             }
+            if (event.type == sf::Event::MouseButtonReleased) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
+                    sf::Vector2f screen_size = window.getView().getSize();
+                    sf::Vector2f mouse_pos(
+                        event.mouseButton.x - screen_size.x/2,
+                        event.mouseButton.y - screen_size.y/2);
+                    mouse_pos = camera.get_transform().getInverse()
+                        .transformPoint(mouse_pos);
+
+                    target.position().x() = mouse_pos.x;
+                    target.position().y() = mouse_pos.y;
+                }
+            }
         }
+
         renderer.add_command(robot.pose, robot.to_render.body);
         renderer.add_command(robot.pose, robot.to_render.direction);
         renderer.add_command(terrain.pose, terrain.to_render.terrain);
-        renderer.add_command(robot.pose, scan.to_render.measurements);
+        renderer.add_command(Pose(), scan.to_render.measurements);
+        renderer.add_command(target, target_marker);
+
         renderer.render(camera);
     }
 

@@ -16,6 +16,15 @@ sf::Vertex create_vertex(sf::Color color, const Eigen::Vector2d& pos)
     return vertex;
 }
 
+sf::Vertex create_vertex(sf::Color color, double x, double y)
+{
+    sf::Vertex vertex;
+    vertex.position.x = x;
+    vertex.position.y = y;
+    vertex.color = color;
+    return vertex;
+}
+
 namespace mesh_triangulation {
 
 static bool vertex_on_the_left(const Eigen::Vector2d& first, const Eigen::Vector2d& second, const Eigen::Vector2d& query)
@@ -115,7 +124,7 @@ void add_marker(
     double size,
     sf::Color color)
 {
-    double t = size*0.2; // Thickness
+    double t = (size > 0.3 ? 0.3 : size) * 0.2; // Thickness
     double d1 = t / std::sqrt(2);
     double d3 = d1 + ((size-t)/2) / std::sqrt(2);
     double d2 = d3 - t / std::sqrt(2);
@@ -138,3 +147,20 @@ void add_marker(
     pose.position() = pos;
     add_mesh(vertex_array, pose, vertices, color);
 }
+
+void add_circle_mesh(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double radius,
+    sf::Color color,
+    size_t n)
+{
+    for (size_t i = 0; i < n; i++) {
+        vertex_array.append(create_vertex(color, pos));
+        Eigen::Vector2d p1 = pos + radius*get_direction(i*2*M_PI/n);
+        Eigen::Vector2d p2 = pos + radius*get_direction(((i+1)%n)*2*M_PI/n);
+        vertex_array.append(create_vertex(color, p2));
+        vertex_array.append(create_vertex(color, p1));
+    }
+}
+

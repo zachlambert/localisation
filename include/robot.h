@@ -27,11 +27,14 @@ struct Robot {
         to_render.direction.setFillColor(color);
     }
 
-    void step_model(const Eigen::Vector2d& target, double dt)
+    void step_model(const Pose& target, double dt)
     {
         // Control as if you know the current pose and target exactly.
         // This is just to get the robot moving.
-        Eigen::Vector2d disp = target - pose.position();
+        // Currently just using target position, but could drive towards
+        // desired angle too.
+
+        Eigen::Vector2d disp = target.position() - pose.position();
         disp = pose.get_R().transpose() * disp;
         double e_theta = std::atan2(disp.y(), disp.x());
 
