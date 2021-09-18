@@ -43,6 +43,7 @@ Eigen::Matrix2d Pose::get_R()const
 Eigen::Isometry2d Pose::get_T()const
 {
     Eigen::Isometry2d T;
+    T.setIdentity();
     T.rotate(orientation());
     T.translate(position());
     return T;
@@ -101,4 +102,10 @@ Velocity transform_to_twist(const Pose& pose)
     vel.linear() = 0.5*(M - get_S(1))*pose.position();
     vel.angular() = theta;
     return vel;
+}
+
+Eigen::Vector2d transform_point(const Pose& pose, const Eigen::Vector2d& point)
+{
+    Eigen::Vector3d result = pose.get_T() * Eigen::Vector3d(point.x(), point.y(), 1);
+    return Eigen::Vector2d(result.x(), result.y());
 }

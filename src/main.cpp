@@ -3,6 +3,7 @@
 
 #include "renderer.h"
 #include "robot.h"
+#include "sensor.h"
 #include "terrain.h"
 
 void create_terrain(Terrain& terrain)
@@ -70,9 +71,12 @@ int main()
     Robot robot(0.1, sf::Color::Red);
     robot.pose.position().x() = -3;
 
-    Terrain terrain(sf::Color::Black);
+    Terrain terrain(sf::Color(150, 150, 150));
     create_terrain(terrain);
     terrain.initialise();
+
+    LaserScan scan(100);
+    scan.sample(robot.pose, terrain);
 
     while (window.isOpen()) {
         sf::Event event;
@@ -85,6 +89,7 @@ int main()
         renderer.add_command(robot.pose, robot.to_render.body);
         renderer.add_command(robot.pose, robot.to_render.direction);
         renderer.add_command(terrain.pose, terrain.to_render.terrain);
+        renderer.add_command(robot.pose, scan.to_render.measurements);
         renderer.render(camera);
     }
 

@@ -34,7 +34,7 @@ public:
     {
         elements.push_back(element);
     }
-    double query_intersection(const Pose& pose, double angle);
+    double query_intersection(const Pose& pose, double angle)const;
 
     Pose pose;
     struct {

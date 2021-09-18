@@ -14,8 +14,10 @@ find_package(SFML 2 REQUIRED graphics window system)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SRC
-    src/main.cpp
     src/geometry.cpp
+    src/main.cpp
+    src/render_utils.cpp
+    src/sensor.cpp
     src/terrain.cpp
 )
 
