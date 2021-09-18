@@ -6,60 +6,6 @@
 #include "sensor.h"
 #include "terrain.h"
 
-void create_terrain(Terrain& terrain)
-{
-    // Create bounding box, with overlapping edges at the corners for simplicity
-    double inner_width = 8;
-    double inner_height = 8;
-    double outer_thickness = 1;
-    double x1 = inner_width/2;
-    double x2 = inner_width/2 + outer_thickness;
-    double y1 = inner_height/2;
-    double y2 = inner_height/2 + outer_thickness;
-    {
-        Terrain::Element element;
-        element.add_vertex(-x1, -y2);
-        element.add_vertex(-x2, -y2);
-        element.add_vertex(-x2, y2);
-        element.add_vertex(-x1, y2);
-        terrain.add_element(element);
-    }
-    {
-        Terrain::Element element;
-        element.add_vertex(-x2, y1);
-        element.add_vertex(-x2, y2);
-        element.add_vertex(x2, y2);
-        element.add_vertex(x2, y1);
-        terrain.add_element(element);
-    }
-    {
-        Terrain::Element element;
-        element.add_vertex(x1, -y2);
-        element.add_vertex(x1, y2);
-        element.add_vertex(x2, y2);
-        element.add_vertex(x2, -y2);
-        terrain.add_element(element);
-    }
-    {
-        Terrain::Element element;
-        element.add_vertex(-x2, -y1);
-        element.add_vertex(x2, -y1);
-        element.add_vertex(x2, -y2);
-        element.add_vertex(-x2, -y2);
-        terrain.add_element(element);
-    }
-
-    // Add an arbitrary element within
-    {
-        Terrain::Element element;
-        element.add_vertex(-1, -1);
-        element.add_vertex(-1.5, 1);
-        element.add_vertex(0, 1.2);
-        element.add_vertex(1.5, 0.8);
-        element.add_vertex(1.1, -1.2);
-        terrain.add_element(element);
-    }
-}
 
 int main()
 {
@@ -70,6 +16,8 @@ int main()
 
     Robot robot(0.1, sf::Color::Red);
     robot.pose.position().x() = -3;
+    robot.pose.position().y() = -3;
+    robot.pose.orientation() = 2;
 
     Terrain terrain(sf::Color(150, 150, 150));
     create_terrain(terrain);
@@ -78,12 +26,20 @@ int main()
     LaserScan scan(100);
     scan.sample(robot.pose, terrain);
 
+    Eigen::Vector2d target(-3, 3);
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
                 return 0;
+            }
+            if (event.type == sf::Event::KeyReleased) {
+                if (event.key.code == sf::Keyboard::Return) {
+                    robot.step_model(target, 0.1);
+                    scan.sample(robot.pose, terrain);
+                }
             }
         }
         renderer.add_command(robot.pose, robot.to_render.body);

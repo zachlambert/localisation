@@ -47,4 +47,6 @@ private:
 };
 
 
+void create_terrain(Terrain& terrain);
+
 #endif

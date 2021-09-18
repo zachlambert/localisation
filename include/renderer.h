@@ -25,7 +25,7 @@ struct Camera {
         sf::Transform transform(sf::Transform::Identity);
         // Opposite order to expected
         transform.translate(pose.position().x(), pose.position().y());
-        transform.rotate(pose.orientation());
+        transform.rotate(pose.orientation()*180/M_PI);
         transform.scale(scale, -scale);
         return transform;
     }
@@ -87,6 +87,7 @@ public:
                     break;
             }
         }
+        commands.clear();
         window.display();
     }
 
@@ -103,9 +104,9 @@ private:
         Command(const Pose& pose, Command::Type type, const void* data):
             transform(sf::Transform::Identity), type(type), data(data)
         {
-            // Opposite order to expected
+            // Opposite order to expected. Uses degrees.
             transform.translate(pose.position().x(), pose.position().y());
-            transform.rotate(pose.orientation());
+            transform.rotate(pose.orientation()*180/M_PI);
         }
     };
 

@@ -77,10 +77,27 @@ public:
         return V(2);
     }
 
+    Velocity& operator*=(double s) {
+        V *= s;
+        return *this;
+    }
+
 private:
     Eigen::Vector3d V;
 };
 
+static Velocity operator*(const Velocity& lhs, double rhs)
+{
+    Velocity result(lhs);
+    result *= rhs;
+    return result;
+}
+static Velocity operator*(double lhs, const Velocity& rhs)
+{
+    Velocity result(rhs);
+    result *= lhs;
+    return result;
+}
 
 Pose twist_to_transform(const Velocity& twist);
 

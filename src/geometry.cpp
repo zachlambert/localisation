@@ -44,8 +44,8 @@ Eigen::Isometry2d Pose::get_T()const
 {
     Eigen::Isometry2d T;
     T.setIdentity();
-    T.rotate(orientation());
     T.translate(position());
+    T.rotate(orientation());
     return T;
 }
 
@@ -63,7 +63,7 @@ Eigen::Matrix3d Pose::get_X()const
 void Pose::set_from_T(const Eigen::Isometry2d &T)
 {
     position() = T.translation();
-    Eigen::Matrix2d R = T.rotation();
+    Eigen::Matrix2d R = T.rotation().matrix();
     orientation() = std::atan2(R(1,0), R(0,0));
 }
 
