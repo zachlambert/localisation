@@ -39,10 +39,24 @@ public:
         commands.reserve(MAX_COMMANDS);
     }
 
+    void add_command(const Pose& pose, const sf::CircleShape& data)
+    {
+        commands.push_back(Command(
+            pose, Command::CIRCLE, (const void*)&data
+        ));
+    }
+
     void add_command(const Pose& pose, const sf::RectangleShape& data)
     {
         commands.push_back(Command(
             pose, Command::RECT, (const void*)&data
+        ));
+    }
+
+    void add_command(const Pose& pose, const sf::VertexArray& data)
+    {
+        commands.push_back(Command(
+            pose, Command::VERTEX_ARRAY, (const void*)&data
         ));
     }
     
@@ -64,6 +78,11 @@ public:
                 case Command::RECT:
                     window.draw(*(const sf::RectangleShape*)command.data, transform);
                     break;
+                case Command::CIRCLE:
+                    window.draw(*(const sf::CircleShape*)command.data, transform);
+                    break;
+                case Command::VERTEX_ARRAY:
+                    window.draw(*(const sf::VertexArray*)command.data, transform);
                 default:
                     break;
             }
@@ -75,10 +94,9 @@ private:
     struct Command {
         sf::Transform transform;
         enum Type {
-            LINE,
-            CIRCE,
             RECT,
-            IMAGE
+            CIRCLE,
+            VERTEX_ARRAY
         } type;
         const void* data;
 
