@@ -59,7 +59,7 @@ public:
             pose, Command::VERTEX_ARRAY, (const void*)&data
         ));
     }
-    
+
     void render(const Camera& camera)
     {
         // Make the window adapt to changes in size, and centre on (0, 0)

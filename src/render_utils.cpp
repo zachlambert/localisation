@@ -163,4 +163,3 @@ void add_circle_mesh(
         vertex_array.append(create_vertex(color, p1));
     }
 }
-

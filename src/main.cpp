@@ -7,6 +7,9 @@
 #include "terrain.h"
 #include "render_utils.h"
 
+struct World {
+
+};
 
 int main()
 {
@@ -29,10 +32,11 @@ int main()
 
     Pose target;
     target.position() = Eigen::Vector2d(-3, 3);
-    sf::VertexArray target_marker;
-    target_marker.setPrimitiveType(sf::Triangles);
-    add_marker(target_marker, Eigen::Vector2d::Zero(), 0.5, sf::Color::Red);
+    Marker target_marker;
+    target_marker.setSize(1);
+    target_marker.setColor(sf::Color::Red);
 
+    sf::Clock clock;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -65,9 +69,20 @@ int main()
         renderer.add_command(robot.pose, robot.to_render.direction);
         renderer.add_command(terrain.pose, terrain.to_render.terrain);
         renderer.add_command(Pose(), scan.to_render.measurements);
-        renderer.add_command(target, target_marker);
 
-        renderer.render(camera);
+        // target_marker.setPosition(target.position().x(), target.position().y());
+        
+        window.clear(sf::Color::White);
+        target_marker.setPosition(0, 0);
+        sf::View view;
+        view.setCenter(0, 0);
+        view.setSize(window.getSize().x, window.getSize().y);
+        view.zoom(1.0/100);
+        window.setView(view);
+        window.draw(target_marker);
+        window.display();
+
+        // renderer.render(camera);
     }
 
     return 0;
