@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 
 // #include "renderer.h"
-// #include "robot.h"
+#include "robot.h"
 // #include "sensor.h"
 // #include "terrain.h"
 #include "render_objects.h"
@@ -13,29 +13,8 @@ struct Camera {
     double scale;
     Camera():
         position(0, 0),
-        scale(50)
+        scale(80)
     {}
-};
-
-class Robot: public sf::Drawable {
-public:
-    Robot() {}
-
-    // Data
-    Pose pose;
-
-    // Render objects
-    mutable struct {
-        sf::PoseMarker pose_marker;
-    } to_draw;
-
-private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        to_draw.pose_marker.setPosition(pose.position().x(), pose.position().y());
-        to_draw.pose_marker.setRotation(pose.orientation());
-        target.draw(to_draw.pose_marker, states);
-    }
 };
 
 int main()
@@ -62,6 +41,10 @@ int main()
     Camera camera;
 
     Robot robot;
+    robot.pose.position() = Eigen::Vector2d(1, 1);
+    robot.pose.orientation() = 0.5;
+    robot.vel.linear() = Eigen::Vector2d(1, 0.2);
+    robot.vel.angular() = 1;
 
     // Target target;
     // target.position = Eigen::Vector2d(-3, 3);
@@ -98,7 +81,7 @@ int main()
 
         sf::View view;
         view.setCenter(camera.position.x(), camera.position.y());
-        view.setSize(window.getSize().x, window.getSize().y);
+        view.setSize((double)window.getSize().x, -(double)window.getSize().y); // Flip y axis
         view.zoom(1.0/camera.scale);
         window.setView(view);
 

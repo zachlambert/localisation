@@ -5,27 +5,26 @@
 
 #include <SFML/Graphics.hpp>
 #include "geometry.h"
+#include "render_objects.h"
 
-struct Robot {
+class Robot: public sf::Drawable {
+public:
+    Robot()
+    {
+        to_draw.pose_marker.setColor(sf::Color::Red);
+        to_draw.velocity_marker.setColor(sf::Color::Magenta);
+        vel.angular() = 1;
+    }
+
+    // Data
     Pose pose;
     Velocity vel;
 
-    struct {
-        sf::CircleShape body;
-        sf::RectangleShape direction;
-        sf::VertexArray vel_arrow;
-    } to_render;
-
-    Robot(double radius, sf::Color color): pose()
-    {
-        to_render.body.setRadius(radius);
-        to_render.body.setFillColor(color);
-        to_render.body.setOrigin(radius, radius);
-
-        to_render.direction.setSize(sf::Vector2f(radius*3, radius*0.5));
-        to_render.direction.setOrigin(0, to_render.direction.getSize().y/2);
-        to_render.direction.setFillColor(color);
-    }
+    // Render objects
+    mutable struct {
+        sf::PoseMarker pose_marker;
+        sf::VelocityMarker velocity_marker;
+    } to_draw;
 
     void step_model(const Eigen::Vector2d& target, double dt)
     {
@@ -57,6 +56,20 @@ struct Robot {
     void step_state_estimation()
     {
 
+    }
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+        to_draw.pose_marker.setPosition(pose.position().x(), pose.position().y());
+        to_draw.pose_marker.setRotation(pose.orientation() * 180/M_PI);
+
+        to_draw.velocity_marker.setPosition(pose.position().x(), pose.position().y());
+        to_draw.velocity_marker.setRotation(pose.orientation());
+        to_draw.velocity_marker.setVelocity(vel);
+
+        target.draw(to_draw.pose_marker, states);
+        target.draw(to_draw.velocity_marker, states);
     }
 };
 

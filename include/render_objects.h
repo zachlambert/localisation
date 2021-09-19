@@ -32,42 +32,66 @@ private:
 };
 
 
-class PoseMarker: public sf::Drawable, public sf::Transformable {
+class RotArrow: public sf::Drawable, public sf::Transformable {
 public:
-    PoseMarker()
-    {
-        setRadius(1);
-        setColor(sf::Color::Black);
-    }
-
-    void setRadius(double radius)
-    {
-        circle.setOrigin(radius, radius);
-        circle.setRadius(radius);
-
-        arrow.setOrigin(0, 0);
-        arrow.setLength(3*radius);
-        arrow.setLineWidth(0.5*radius);
-        arrow.setHeadWidth(radius);
-        arrow.setHeadLength(radius);
-    }
-
-    void setColor(sf::Color color)
-    {
-        circle.setFillColor(color);
-        arrow.setFillColor(color);
-    }
+    RotArrow();
+    void setAngle(double angle);
+    void setDistance(double distance);
+    void setLineWidth(double line_width);
+    void setHeadWidth(double head_width);
+    void setHeadLength(double head_length);
+    void setFillColor(sf::Color color);
 
 private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        states.transform *= getTransform();
-        target.draw(circle, states);
-        target.draw(arrow, states);
-    }
+    void update_vertices()const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
+
+    double angle;
+    double distance;
+    double line_width;
+    double head_width;
+    double head_length;
+    sf::Color color;
+
+    mutable bool dirty;
+    mutable sf::VertexArray vertex_array;
+};
+
+
+class PoseMarker: public sf::Drawable, public sf::Transformable {
+public:
+    PoseMarker();
+    void setRadius(double radius);
+    void setColor(sf::Color color);
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
     sf::CircleShape circle;
     sf::Arrow arrow;
+};
+
+
+class VelocityMarker: public sf::Drawable, public sf::Transformable {
+public:
+    VelocityMarker();
+    void setLineWidth(double line_width);
+    void setLinearScale(double linear_scale);
+    void setAngularScale(double angular_scale);
+    void setColor(sf::Color color);
+    void setVelocity(const Velocity& velocity);
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+
+    double line_width;
+    double linear_scale;
+    double angular_scale;
+    sf::Color color;
+    Velocity velocity;
+
+    sf::Arrow linear_arrow;
+    sf::RotArrow angular_arrow;
 };
 
 }
