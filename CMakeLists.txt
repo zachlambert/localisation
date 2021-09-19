@@ -19,7 +19,7 @@ set(SRC
     src/render_objects.cpp
     src/render_utils.cpp
     src/robot.cpp
-    # src/sensor.cpp
+    src/sensor.cpp
     src/terrain.cpp
 )
 

@@ -4,23 +4,23 @@
 #include "render_utils.h"
 
 
-void LaserScan::sample(const Pose &pose, const Terrain &terrain)
+void LaserScan::sample(const Terrain &terrain)
 {
     for (size_t i = 0; i < y.size(); i++) {
-        double angle = i*2*M_PI/n;
-        y(i) = terrain.query_intersection(pose, i*2*M_PI / n);
+        y(i) = terrain.query_intersection(pose, i*2*M_PI / y.size());
         // TODO: Set using sensor model.
     }
 
-    // Update to_render
-    to_render.measurements.setPrimitiveType(sf::Triangles);
-    to_render.measurements.clear();
+    to_draw.measurements.clearMarkers();
     for (size_t i = 0; i < y.size(); i++) {
-        add_marker(
-            to_render.measurements,
-            pose.position() + y(i) * get_direction(pose.orientation() + i*2*M_PI/n),
-            marker_size,
-            marker_color
+        to_draw.measurements.addMarker(
+            y(i) * get_direction(pose.orientation() + (i*2*M_PI/y.size()))
         );
     }
+}
+
+void LaserScan::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+    to_draw.measurements.setPosition(pose.position().x(), pose.position().y());
+    target.draw(to_draw.measurements, states);
 }

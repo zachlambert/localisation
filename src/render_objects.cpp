@@ -293,4 +293,69 @@ void Marker::draw(sf::RenderTarget& target, sf::RenderStates states) const
     target.draw(vertex_array, states);
 }
 
+
+// ===== MarkerArray =====
+
+MarkerArray::MarkerArray()
+{
+    setSize(0.1);
+    setThickness(0.02);
+    setColor(sf::Color::Blue);
+    vertex_array.setPrimitiveType(sf::Triangles);
+}
+
+void MarkerArray::setSize(double size)
+{
+    this->size = size;
+    dirty = true;
+}
+
+void MarkerArray::setThickness(double thickness)
+{
+    this->thickness = thickness;
+    dirty = true;
+}
+
+void MarkerArray::setColor(sf::Color color)
+{
+    this->color = color;
+    dirty = true;
+}
+
+void MarkerArray::clearMarkers()
+{
+    markers.clear();
+    dirty = true;
+}
+
+void MarkerArray::addMarker(const Eigen::Vector2d& position)
+{
+    markers.push_back(position);
+    dirty = true;
+}
+
+void MarkerArray::update_vertices()const
+{
+    if (!dirty) return;
+
+    vertex_array.clear();
+    for (const auto& marker: markers) {
+        add_marker(
+            vertex_array,
+            marker,
+            size,
+            thickness,
+            color);
+    }
+
+    dirty = false;
+}
+
+void MarkerArray::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+    update_vertices();
+    states.transform *= getTransform();
+    target.draw(vertex_array, states);
+}
+
 }

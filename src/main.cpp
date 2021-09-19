@@ -1,11 +1,11 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "robot.h"
-// #include "sensor.h"
-#include "terrain.h"
-#include "render_objects.h"
 #include "geometry.h"
+#include "render_objects.h"
+#include "robot.h"
+#include "sensor.h"
+#include "terrain.h"
 
 struct Camera {
     Eigen::Vector2d position;
@@ -20,24 +20,24 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localistaion");
 
-    /*
-    LaserScan scan(100);
-    scan.sample(robot.pose, terrain);
-    */
-
     Terrain terrain;
     create_terrain(terrain);
 
     Camera camera;
 
     Robot robot;
-    robot.pose.position() = Eigen::Vector2d(1, 1);
+    robot.pose.position() = Eigen::Vector2d(-3, 3);
     robot.pose.orientation() = 0.5;
     robot.vel.linear() = Eigen::Vector2d(1, 0.2);
     robot.vel.angular() = 1;
 
+    LaserScan scan;
+    scan.setNumPoints(100);
+    scan.pose = robot.pose;
+    scan.sample(terrain);
+
     Target target;
-    target.position = Eigen::Vector2d(-1, 0);
+    target.position = Eigen::Vector2d(-3, 0);
 
     sf::Clock clock;
     while (window.isOpen()) {
@@ -50,7 +50,8 @@ int main()
             if (event.type == sf::Event::KeyReleased) {
                 if (event.key.code == sf::Keyboard::Return) {
                     robot.step_model(target.position, 0.1);
-                    // scan.sample(robot.pose, terrain);
+                    scan.pose = robot.pose;
+                    scan.sample(terrain);
                 }
             }
             if (event.type == sf::Event::MouseButtonReleased) {
@@ -75,6 +76,7 @@ int main()
         window.draw(terrain);
         window.draw(robot);
         window.draw(target);
+        window.draw(scan);
 
         window.display();
     }

@@ -114,69 +114,27 @@ private:
 };
 
 
-/*
-
 class MarkerArray: public sf::Drawable, public sf::Transformable {
 public:
-    MarkerArray():
-        size(0.1),
-        thickness(0.02)
-    {
-        vertex_array.setPrimitiveType(sf::Triangles);
-    }
-
-    void setSize(double size)
-    {
-        this->size = size;
-    }
-
-    void setThickness(double thickness)
-    {
-        this->thickness = thickness;
-    }
-
-    void setColor(sf::Color color)
-    {
-        this->color = color;
-    }
-
-    void update(const std::vector<Eigen::Vector2d> positions)const
-    {
-        vertex_array.clear();
-        for (const auto& position: positions) {
-            add_marker(vertex_array, position, size, color);
-            // TODO: Use thickness
-        }
-    }
+    MarkerArray();
+    void setSize(double size);
+    void setThickness(double thickness);
+    void setColor(sf::Color color);
+    void clearMarkers();
+    void addMarker(const Eigen::Vector2d& position);
 
 private:
-
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        states.transform *= getTransform();
-        target.draw(vertex_array, states);
-    }
+    void update_vertices()const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     double size;
     double thickness;
     sf::Color color;
+    std::vector<Eigen::Vector2d> markers;
 
+    mutable bool dirty;
     mutable sf::VertexArray vertex_array;
 };
-
-class Target: public sf::Drawable {
-public:
-    Eigen::Vector2d position;
-    mutable Marker marker;
-
-private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        marker.setPosition(position.x(), position.y());
-        target.draw(marker, states);
-    }
-};
-*/
 
 }
 
