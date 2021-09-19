@@ -17,7 +17,7 @@
 #include "geometry.h"
 
 
-class Terrain {
+class Terrain: public sf::Drawable {
 public:
     struct Element {
         Eigen::Vector2d pos;
@@ -28,21 +28,20 @@ public:
         }
     };
 
-    Terrain(sf::Color color): color(color) {}
-    void initialise();
-    void add_element(const Element &element)
-    {
-        elements.push_back(element);
-    }
+    Terrain();
+    void add_element(const Element &element);
+    void setColor(sf::Color color);
     double query_intersection(const Pose& pose, double angle)const;
 
-    Pose pose;
-    struct {
-        sf::VertexArray terrain;
-    } to_render;
-
 private:
+    void update_vertices()const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
+
+    // Render information
     sf::Color color;
+    mutable sf::VertexArray vertex_array;
+    mutable bool dirty;
+
     std::vector<Element> elements;
 };
 

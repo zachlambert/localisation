@@ -1,10 +1,9 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-// #include "renderer.h"
 #include "robot.h"
 // #include "sensor.h"
-// #include "terrain.h"
+#include "terrain.h"
 #include "render_objects.h"
 #include "geometry.h"
 
@@ -22,21 +21,12 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localistaion");
 
     /*
-    Camera camera(0, 0, 80);
-    Renderer renderer(window);
-
-    Robot robot(0.1, sf::Color::Red);
-    robot.pose.position().x() = -3;
-    robot.pose.position().y() = -3;
-    robot.pose.orientation() = 2;
-
-    Terrain terrain(sf::Color(150, 150, 150));
-    create_terrain(terrain);
-    terrain.initialise();
-
     LaserScan scan(100);
     scan.sample(robot.pose, terrain);
     */
+
+    Terrain terrain;
+    create_terrain(terrain);
 
     Camera camera;
 
@@ -82,6 +72,7 @@ int main()
         window.setView(view);
 
         // Draw objects
+        window.draw(terrain);
         window.draw(robot);
         window.draw(target);
 

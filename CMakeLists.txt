@@ -14,11 +14,12 @@ find_package(SFML 2 REQUIRED graphics window system)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SRC
-    src/geometry.cpp
     src/main.cpp
+    src/geometry.cpp
     src/render_objects.cpp
+    src/render_utils.cpp
+    src/terrain.cpp
     # src/sensor.cpp
-    # src/terrain.cpp
 )
 
 add_executable(localisation ${SRC})

@@ -5,16 +5,30 @@
 
 #include "render_utils.h"
 
-void Terrain::initialise()
+
+// ====== Terrain =====
+
+Terrain::Terrain()
 {
-    // Create vertex array
-    to_render.terrain.setPrimitiveType(sf::Triangles);
-    for (const auto &element: elements) {
-        Pose element_pose = pose;
-        element_pose.position() += element.pos;
-        add_mesh(to_render.terrain, element_pose, element.vertices, color);
-    }
+    setColor(sf::Color(150, 150, 150));
+    vertex_array.setPrimitiveType(sf::Triangles);
 }
+
+void Terrain::add_element(const Element &element)
+{
+    elements.push_back(element);
+    dirty = true;
+}
+
+void Terrain::setColor(sf::Color color)
+{
+    this->color = color;
+    dirty = true;
+}
+
+
+// Functions used in query_intersection
+namespace intersection {
 
 double line_intersection(
     const Eigen::Vector2d& origin,
@@ -32,8 +46,12 @@ double line_intersection(
     return v1 + (v2 - v1)*(0 - h1) / (h2 - h1);
 }
 
+}
+
 double Terrain::query_intersection(const Pose& pose, double angle)const
 {
+    using namespace intersection;
+
     // For now, just using simple method.
     // If it becomes a bottleneck, implement a quadtree
 
@@ -57,6 +75,35 @@ double Terrain::query_intersection(const Pose& pose, double angle)const
     }
     return min_dist;
 }
+
+
+void Terrain::update_vertices()const
+{
+    if (!dirty) return;
+
+    vertex_array.clear();
+    for (const auto& element: elements) {
+        Pose pose;
+        pose.position() = element.pos;
+        add_mesh(
+            vertex_array,
+            pose,
+            element.vertices,
+            color
+        );
+    }
+
+    dirty = false;
+}
+
+void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+    update_vertices();
+    target.draw(vertex_array, states);
+}
+
+
+// ===== Other functions =====
 
 void create_terrain(Terrain& terrain)
 {
