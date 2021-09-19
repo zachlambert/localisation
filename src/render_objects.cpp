@@ -1,11 +1,12 @@
 
-#include "render_utils.h"
+#include "render_objects.h"
 
 #include <stack>
-#include <iostream>
 
 #include "geometry.h"
 
+
+// ===== Helper functions =====
 
 sf::Vertex create_vertex(sf::Color color, const Eigen::Vector2d& pos)
 {
@@ -24,6 +25,8 @@ sf::Vertex create_vertex(sf::Color color, double x, double y)
     vertex.color = color;
     return vertex;
 }
+
+// Functions only used within the add_mesh function
 
 namespace mesh_triangulation {
 
@@ -148,7 +151,7 @@ void add_marker(
     add_mesh(vertex_array, pose, vertices, color);
 }
 
-void add_circle_mesh(
+void add_circle(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double radius,
@@ -162,4 +165,96 @@ void add_circle_mesh(
         vertex_array.append(create_vertex(color, p2));
         vertex_array.append(create_vertex(color, p1));
     }
+}
+
+void add_arrow(
+    sf::VertexArray& vertex_array,
+    const Pose& pose,
+    double length,
+    double line_width,
+    double head_width,
+    double head_length,
+    sf::Color color)
+{
+    std::vector<Eigen::Vector2d> vertices;
+    vertices.push_back(Eigen::Vector2d(0, line_width/2));
+    vertices.push_back(Eigen::Vector2d(length-head_length, line_width/2));
+    vertices.push_back(Eigen::Vector2d(length-head_length, head_width));
+    vertices.push_back(Eigen::Vector2d(length, 0));
+    vertices.push_back(Eigen::Vector2d(length-head_length, -head_width));
+    vertices.push_back(Eigen::Vector2d(length-head_length, -line_width/2));
+    vertices.push_back(Eigen::Vector2d(0, -line_width/2));
+
+    add_mesh(vertex_array, pose, vertices, color);
+}
+
+
+// sf-like objects
+
+namespace sf {
+
+// ===== Arrow class =====
+
+Arrow::Arrow():
+    length(0.25),
+    line_width(0.05),
+    head_width(0.1),
+    head_length(0.05),
+    color(sf::Color::Black),
+    dirty(true)
+{
+    vertex_array.setPrimitiveType(sf::Triangles);
+}
+
+void Arrow::setLength(double length)
+{
+    this->length = length;
+    dirty = true;
+}
+
+void Arrow::setLineWidth(double line_width)
+{
+    this->line_width = line_width;
+    dirty = true;
+}
+
+void Arrow::setHeadWidth(double head_width)
+{
+    this->head_width = head_width;
+    dirty = true;
+}
+
+void Arrow::setHeadLength(double head_length)
+{
+    this->head_length = head_length;
+    dirty = true;
+}
+
+void Arrow::setFillColor(sf::Color color)
+{
+    this->color = color;
+    dirty = true;
+}
+
+void Arrow::update_vertices()const
+{
+    if (!dirty) return;
+    add_arrow(
+        vertex_array,
+        Pose(),
+        length,
+        line_width,
+        head_width,
+        head_length,
+        color);
+    dirty = false;
+}
+
+void Arrow::draw(sf::RenderTarget& target, sf::RenderStates states)const
+{
+    update_vertices();
+    states.transform *= getTransform();
+    target.draw(vertex_array, states);
+}
+
 }

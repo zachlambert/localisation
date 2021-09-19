@@ -16,9 +16,9 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(SRC
     src/geometry.cpp
     src/main.cpp
-    src/render_utils.cpp
-    src/sensor.cpp
-    src/terrain.cpp
+    src/render_objects.cpp
+    # src/sensor.cpp
+    # src/terrain.cpp
 )
 
 add_executable(localisation ${SRC})

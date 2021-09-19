@@ -1,11 +1,78 @@
-#ifndef RENDER_UTILS_H
-#define RENDER_UTILS_H
+#ifndef RENDER_OBJECTS_H
+#define RENDER_OBJECTS_H
 
-#include <iostream>
 #include <Eigen/Core>
 #include <SFML/Graphics.hpp>
 
 #include "geometry.h"
+
+namespace sf {
+
+class Arrow: public sf::Drawable, public sf::Transformable {
+public:
+    Arrow();
+    void setLength(double ength);
+    void setLineWidth(double line_width);
+    void setHeadWidth(double head_width);
+    void setHeadLength(double head_length);
+    void setFillColor(sf::Color color);
+
+private:
+    void update_vertices()const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
+
+    double length;
+    double line_width;
+    double head_width;
+    double head_length;
+    sf::Color color;
+
+    mutable bool dirty;
+    mutable sf::VertexArray vertex_array;
+};
+
+
+class PoseMarker: public sf::Drawable, public sf::Transformable {
+public:
+    PoseMarker()
+    {
+        setRadius(1);
+        setColor(sf::Color::Black);
+    }
+
+    void setRadius(double radius)
+    {
+        circle.setOrigin(radius, radius);
+        circle.setRadius(radius);
+
+        arrow.setOrigin(0, 0);
+        arrow.setLength(3*radius);
+        arrow.setLineWidth(0.5*radius);
+        arrow.setHeadWidth(radius);
+        arrow.setHeadLength(radius);
+    }
+
+    void setColor(sf::Color color)
+    {
+        circle.setFillColor(color);
+        arrow.setFillColor(color);
+    }
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+        states.transform *= getTransform();
+        target.draw(circle, states);
+        target.draw(arrow, states);
+    }
+
+    sf::CircleShape circle;
+    sf::Arrow arrow;
+};
+
+}
+
+/*
 
 void add_mesh(
     sf::VertexArray& vertex_array,
@@ -63,11 +130,6 @@ private:
 
         vertex_array.clear();
         add_marker(vertex_array, Eigen::Vector2d(0,0), size, color);
-        for (size_t i = 0; i < vertex_array.getVertexCount(); i++) {
-            std::cout << vertex_array[i].position.x << ", "
-                      << vertex_array[i].position.y << std::endl;
-        }
-        std::cout << "here" << std::endl;
         // TODO: Use thickness
 
         dirty = false;
@@ -136,5 +198,19 @@ private:
 
     mutable sf::VertexArray vertex_array;
 };
+
+class Target: public sf::Drawable {
+public:
+    Eigen::Vector2d position;
+    mutable Marker marker;
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+        marker.setPosition(position.x(), position.y());
+        target.draw(marker, states);
+    }
+};
+*/
 
 #endif
