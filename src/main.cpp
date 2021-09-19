@@ -46,10 +46,8 @@ int main()
     robot.vel.linear() = Eigen::Vector2d(1, 0.2);
     robot.vel.angular() = 1;
 
-    // Target target;
-    // target.position = Eigen::Vector2d(-3, 3);
-    // target.marker.setSize(1);
-    // target.marker.setColor(sf::Color::Green);
+    Target target;
+    target.position = Eigen::Vector2d(-1, 0);
 
     sf::Clock clock;
     while (window.isOpen()) {
@@ -60,19 +58,17 @@ int main()
                 return 0;
             }
             if (event.type == sf::Event::KeyReleased) {
-                /*
                 if (event.key.code == sf::Keyboard::Return) {
                     robot.step_model(target.position, 0.1);
-                    scan.sample(robot.pose, terrain);
+                    // scan.sample(robot.pose, terrain);
                 }
-                */
             }
             if (event.type == sf::Event::MouseButtonReleased) {
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
                     sf::Vector2f mapped_pos = window.mapPixelToCoords(mouse_pos);
-                    // target.position.x() = mapped_pos.x;
-                    // target.position.y() = mapped_pos.y;
+                    target.position.x() = mapped_pos.x;
+                    target.position.y() = mapped_pos.y;
                 }
             }
         }
@@ -87,6 +83,7 @@ int main()
 
         // Draw objects
         window.draw(robot);
+        window.draw(target);
 
         window.display();
     }

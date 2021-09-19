@@ -14,6 +14,7 @@ public:
         to_draw.pose_marker.setColor(sf::Color::Red);
         to_draw.velocity_marker.setColor(sf::Color::Magenta);
         vel.angular() = 1;
+        to_draw.enable_velocity_marker = false;
     }
 
     // Data
@@ -24,6 +25,7 @@ public:
     mutable struct {
         sf::PoseMarker pose_marker;
         sf::VelocityMarker velocity_marker;
+        bool enable_velocity_marker;
     } to_draw;
 
     void step_model(const Eigen::Vector2d& target, double dt)
@@ -65,11 +67,38 @@ private:
         to_draw.pose_marker.setRotation(pose.orientation() * 180/M_PI);
 
         to_draw.velocity_marker.setPosition(pose.position().x(), pose.position().y());
-        to_draw.velocity_marker.setRotation(pose.orientation());
+        to_draw.velocity_marker.setRotation(pose.orientation() * 180/M_PI);
         to_draw.velocity_marker.setVelocity(vel);
 
         target.draw(to_draw.pose_marker, states);
-        target.draw(to_draw.velocity_marker, states);
+        if (to_draw.enable_velocity_marker) {
+            target.draw(to_draw.velocity_marker, states);
+        }
+    }
+};
+
+
+class Target: public sf::Drawable {
+public:
+    Target()
+    {
+        to_draw.marker.setSize(0.5);
+        to_draw.marker.setThickness(0.1);
+    }
+
+    // Data
+    Eigen::Vector2d position;
+
+    // Render objects
+    mutable struct {
+        sf::Marker marker;
+    } to_draw;
+
+private:
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
+    {
+        to_draw.marker.setPosition(position.x(), position.y());
+        target.draw(to_draw.marker, states);
     }
 };
 

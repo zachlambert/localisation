@@ -154,12 +154,12 @@ void add_marker(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double size,
+    double thickness,
     sf::Color color)
 {
-    double t = (size > 0.3 ? 0.3 : size) * 0.2; // Thickness
-    double d1 = t / std::sqrt(2);
-    double d3 = d1 + ((size-t)/2) / std::sqrt(2);
-    double d2 = d3 - t / std::sqrt(2);
+    double d1 = thickness / std::sqrt(2);
+    double d3 = d1 + ((size-thickness)/2) / std::sqrt(2);
+    double d2 = d3 - thickness / std::sqrt(2);
 
     std::vector<Eigen::Vector2d> vertices;
     vertices.push_back(Eigen::Vector2d(-d1, 0));
@@ -496,6 +496,58 @@ void VelocityMarker::draw(sf::RenderTarget& target, sf::RenderStates states) con
     states.transform *= getTransform();
     target.draw(linear_arrow, states);
     target.draw(angular_arrow, states);
+}
+
+
+// ===== Marker =====
+
+Marker::Marker():
+    size(0.1),
+    thickness(0.02),
+    color(sf::Color::Red),
+    dirty(true)
+{
+    vertex_array.setPrimitiveType(sf::Triangles);
+}
+
+void Marker::setSize(double size)
+{
+    this->size = size;
+    dirty = true;
+}
+
+void Marker::setThickness(double thickness)
+{
+    this->thickness = thickness;
+    dirty = true;
+}
+
+void Marker::setColor(sf::Color color)
+{
+    this->color = color;
+    dirty = true;
+}
+
+void Marker::update_vertices()const
+{
+    if (!dirty) return;
+
+    vertex_array.clear();
+    add_marker(
+        vertex_array,
+        Eigen::Vector2d(0,0),
+        size,
+        thickness,
+        color);
+
+    dirty = false;
+}
+
+void Marker::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+    update_vertices();
+    states.transform *= getTransform();
+    target.draw(vertex_array, states);
 }
 
 }

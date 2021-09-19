@@ -94,77 +94,16 @@ private:
     sf::RotArrow angular_arrow;
 };
 
-}
-
-/*
-
-void add_mesh(
-    sf::VertexArray& vertex_array,
-    const Pose& pose,
-    const std::vector<Eigen::Vector2d>& vertices,
-    sf::Color color);
-
-void add_marker(
-    sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double size,
-    sf::Color color);
-
-void add_circle_mesh(
-    sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double radius,
-    sf::Color color,
-    size_t n=20);
-
-
 class Marker: public sf::Drawable, public sf::Transformable {
 public:
-    Marker():
-        size(0.1),
-        thickness(0.02),
-        color(sf::Color::Red),
-        dirty(true)
-    {
-        vertex_array.setPrimitiveType(sf::Triangles);
-    }
-
-    void setSize(double size)
-    {
-        this->size = size;
-        dirty = true;
-    }
-
-    void setThickness(double thickness)
-    {
-        this->thickness = thickness;
-        dirty = true;
-    }
-
-    void setColor(sf::Color color)
-    {
-        this->color = color;
-        dirty = true;
-    }
+    Marker();
+    void setSize(double size);
+    void setThickness(double thickness);
+    void setColor(sf::Color color);
 
 private:
-    void update_vertices()const
-    {
-        if (!dirty) return;
-
-        vertex_array.clear();
-        add_marker(vertex_array, Eigen::Vector2d(0,0), size, color);
-        // TODO: Use thickness
-
-        dirty = false;
-    }
-
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
-    {
-        update_vertices();
-        states.transform *= getTransform();
-        target.draw(vertex_array, states);
-    }
+    void update_vertices()const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
     double size;
     double thickness;
@@ -174,6 +113,8 @@ private:
     mutable sf::VertexArray vertex_array;
 };
 
+
+/*
 
 class MarkerArray: public sf::Drawable, public sf::Transformable {
 public:
@@ -236,5 +177,7 @@ private:
     }
 };
 */
+
+}
 
 #endif
