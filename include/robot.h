@@ -9,8 +9,6 @@
 
 class Robot: public sf::Drawable {
 public:
-    Robot();
-
     // Data
     Pose pose;
     Velocity vel;
@@ -22,7 +20,8 @@ public:
         bool enable_velocity_marker;
     } to_draw;
 
-    void stepModel(const Eigen::Vector2d& target, double dt);
+    Robot();
+    void stepModel(const Velocity& u, double dt);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
@@ -31,15 +30,13 @@ private:
 
 class Target: public sf::Drawable {
 public:
-    Target();
+    Pose pose;
 
-    // Data
-    Eigen::Vector2d position;
-
-    // Render objects
     mutable struct {
         sf::Marker marker;
     } to_draw;
+
+    Target();
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;

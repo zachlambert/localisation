@@ -13,29 +13,9 @@ Robot::Robot()
 }
 
 
-void Robot::stepModel(const Eigen::Vector2d& target, double dt)
+void Robot::stepModel(const Velocity& u, double dt)
 {
-    // Control as if you know the current pose and target exactly.
-    // This is just to get the robot moving.
-
-    Eigen::Vector2d disp = target - pose.position();
-    disp = pose.rotation().transpose() * disp;
-    double e_theta = std::atan2(disp.y(), disp.x());
-
-    double kv = 2;
-    double kw = 1;
-    double vmax = 0.5;
-    double wmax = 3;
-
-    vel.linear().x() = kv * disp.x();
-    if (vel.linear().x() < 0) vel.linear().x() = 0;
-    if (vel.linear().x() > vmax) vel.linear().x() = vmax;
-    vel.linear().y() = 0;
-
-    vel.angular() = kw * e_theta;
-    if (vel.angular() < -wmax) vel.angular() = -wmax;
-    if (vel.angular() > wmax) vel.angular() = wmax;
-
+    vel = u;
     Eigen::Isometry2d dT = twistToTransform(vel * dt).transform();
     pose.setFromTransform(pose.transform() * dT);
 }
@@ -67,6 +47,6 @@ Target::Target()
 
 void Target::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-    to_draw.marker.setPosition(position.x(), position.y());
+    to_draw.marker.setPosition(pose.position().x(), pose.position().y());
     target.draw(to_draw.marker, states);
 }

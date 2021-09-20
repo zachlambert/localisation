@@ -10,22 +10,22 @@
 #include "render_objects.h"
 
 
-class LaserScan: public sf::Drawable {
+class Lidar: public sf::Drawable {
 public:
-    Eigen::VectorXd y;
-    Pose pose;
+    Eigen::VectorXd scan;
 
     mutable struct {
         sf::MarkerArray measurements;
     } to_draw;
 
-    LaserScan();
+    Lidar();
     void setNumPoints(size_t num_points);
-    void sample(const Terrain &terrain);
+    void sample(const Pose& pose, const Terrain &terrain);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
+    Pose pose;
 };
 
 #endif
