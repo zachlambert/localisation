@@ -4,10 +4,26 @@
 #include "render_utils.h"
 
 
+// ===== LaserScan =====
+
+LaserScan::LaserScan()
+{
+    setNumPoints(20);
+    to_draw.measurements.setColor(sf::Color::Blue);
+    to_draw.measurements.setSize(0.1);
+    to_draw.measurements.setThickness(0.02);
+}
+
+void LaserScan::setNumPoints(size_t num_points)
+{
+    y.resize(num_points);
+    y.setZero();
+}
+
 void LaserScan::sample(const Terrain &terrain)
 {
     for (size_t i = 0; i < y.size(); i++) {
-        y(i) = terrain.query_intersection(pose, i*2*M_PI / y.size());
+        y(i) = terrain.queryIntersection(pose, i*2*M_PI / y.size());
         // TODO: Set using sensor model.
     }
 

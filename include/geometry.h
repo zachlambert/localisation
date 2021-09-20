@@ -6,8 +6,8 @@
 #include <Eigen/Geometry>
 
 
-Eigen::Vector2d get_S(const Eigen::Vector2d &vector);
-Eigen::Matrix2d get_S(double scalar);
+Eigen::Vector2d crossProductMatrix(const Eigen::Vector2d &vector);
+Eigen::Matrix2d crossProductMatrix(double scalar);
 
 class Pose {
 public:
@@ -36,12 +36,12 @@ public:
     }
 
     // Rotation matrix
-    Eigen::Matrix2d get_R()const;
+    Eigen::Matrix2d rotation()const;
     // Homogeneous transformation
-    Eigen::Isometry2d get_T()const;
+    Eigen::Isometry2d transform()const;
     // Spatial velocity transform
-    Eigen::Matrix3d get_X()const;
-    void set_from_T(const Eigen::Isometry2d &T);
+    Eigen::Matrix3d velocityTransform()const;
+    void setFromTransform(const Eigen::Isometry2d &T);
 
 private:
     Eigen::Vector3d x;
@@ -99,11 +99,11 @@ static Velocity operator*(double lhs, const Velocity& rhs)
     return result;
 }
 
-Pose twist_to_transform(const Velocity& twist);
+Pose twistToTransform(const Velocity& twist);
 
-Velocity transform_to_twist(const Pose& pose);
+Velocity transformToTwist(const Pose& pose);
 
-Eigen::Vector2d transform_point(const Pose& pose, const Eigen::Vector2d& point);
+Eigen::Vector2d transformPoint(const Pose& pose, const Eigen::Vector2d& point);
 
 inline Eigen::Vector2d get_direction(double angle)
 {

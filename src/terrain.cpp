@@ -14,7 +14,7 @@ Terrain::Terrain()
     vertex_array.setPrimitiveType(sf::Triangles);
 }
 
-void Terrain::add_element(const Element &element)
+void Terrain::addElement(const Element &element)
 {
     elements.push_back(element);
     dirty = true;
@@ -48,7 +48,7 @@ double line_intersection(
 
 }
 
-double Terrain::query_intersection(const Pose& pose, double angle)const
+double Terrain::queryIntersection(const Pose& pose, double angle)const
 {
     using namespace intersection;
 
@@ -56,7 +56,7 @@ double Terrain::query_intersection(const Pose& pose, double angle)const
     // If it becomes a bottleneck, implement a quadtree
 
     Eigen::Vector2d origin = pose.position();
-    Eigen::Vector2d direction = pose.get_R() * get_direction(angle);
+    Eigen::Vector2d direction = pose.rotation() * get_direction(angle);
 
     double min_dist = INFINITY;
     double dist;
@@ -77,7 +77,7 @@ double Terrain::query_intersection(const Pose& pose, double angle)const
 }
 
 
-void Terrain::update_vertices()const
+void Terrain::updateVertices()const
 {
     if (!dirty) return;
 
@@ -85,7 +85,7 @@ void Terrain::update_vertices()const
     for (const auto& element: elements) {
         Pose pose;
         pose.position() = element.pos;
-        add_mesh(
+        addMesh(
             vertex_array,
             pose,
             element.vertices,
@@ -98,14 +98,14 @@ void Terrain::update_vertices()const
 
 void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-    update_vertices();
+    updateVertices();
     target.draw(vertex_array, states);
 }
 
 
 // ===== Other functions =====
 
-void create_terrain(Terrain& terrain)
+void createTerrain(Terrain& terrain)
 {
     // Create bounding box, with overlapping edges at the corners for simplicity
     double inner_width = 8;
@@ -117,45 +117,45 @@ void create_terrain(Terrain& terrain)
     double y2 = inner_height/2 + outer_thickness;
     {
         Terrain::Element element;
-        element.add_vertex(-x1, -y2);
-        element.add_vertex(-x2, -y2);
-        element.add_vertex(-x2, y2);
-        element.add_vertex(-x1, y2);
-        terrain.add_element(element);
+        element.addVertex(-x1, -y2);
+        element.addVertex(-x2, -y2);
+        element.addVertex(-x2, y2);
+        element.addVertex(-x1, y2);
+        terrain.addElement(element);
     }
     {
         Terrain::Element element;
-        element.add_vertex(-x2, y1);
-        element.add_vertex(-x2, y2);
-        element.add_vertex(x2, y2);
-        element.add_vertex(x2, y1);
-        terrain.add_element(element);
+        element.addVertex(-x2, y1);
+        element.addVertex(-x2, y2);
+        element.addVertex(x2, y2);
+        element.addVertex(x2, y1);
+        terrain.addElement(element);
     }
     {
         Terrain::Element element;
-        element.add_vertex(x1, -y2);
-        element.add_vertex(x1, y2);
-        element.add_vertex(x2, y2);
-        element.add_vertex(x2, -y2);
-        terrain.add_element(element);
+        element.addVertex(x1, -y2);
+        element.addVertex(x1, y2);
+        element.addVertex(x2, y2);
+        element.addVertex(x2, -y2);
+        terrain.addElement(element);
     }
     {
         Terrain::Element element;
-        element.add_vertex(-x2, -y1);
-        element.add_vertex(x2, -y1);
-        element.add_vertex(x2, -y2);
-        element.add_vertex(-x2, -y2);
-        terrain.add_element(element);
+        element.addVertex(-x2, -y1);
+        element.addVertex(x2, -y1);
+        element.addVertex(x2, -y2);
+        element.addVertex(-x2, -y2);
+        terrain.addElement(element);
     }
 
     // Add an arbitrary element within
     {
         Terrain::Element element;
-        element.add_vertex(-1, -1);
-        element.add_vertex(-1.5, 1);
-        element.add_vertex(0, 1.2);
-        element.add_vertex(1.5, 0.8);
-        element.add_vertex(1.1, -1.2);
-        terrain.add_element(element);
+        element.addVertex(-1, -1);
+        element.addVertex(-1.5, 1);
+        element.addVertex(0, 1.2);
+        element.addVertex(1.5, 0.8);
+        element.addVertex(1.1, -1.2);
+        terrain.addElement(element);
     }
 }

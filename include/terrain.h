@@ -23,18 +23,18 @@ public:
         Eigen::Vector2d pos;
         std::vector<Eigen::Vector2d> vertices;
         Element(): pos(0,0), vertices() {}
-        void add_vertex(double x, double y) {
+        void addVertex(double x, double y) {
             vertices.push_back(Eigen::Vector2d(x, y));
         }
     };
 
     Terrain();
-    void add_element(const Element &element);
+    void addElement(const Element &element);
     void setColor(sf::Color color);
-    double query_intersection(const Pose& pose, double angle)const;
+    double queryIntersection(const Pose& pose, double angle)const;
 
 private:
-    void update_vertices()const;
+    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     // Render information
@@ -46,6 +46,6 @@ private:
 };
 
 
-void create_terrain(Terrain& terrain);
+void createTerrain(Terrain& terrain);
 
 #endif

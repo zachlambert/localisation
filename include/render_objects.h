@@ -18,7 +18,7 @@ public:
     void setFillColor(sf::Color color);
 
 private:
-    void update_vertices()const;
+    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     double length;
@@ -43,7 +43,7 @@ public:
     void setFillColor(sf::Color color);
 
 private:
-    void update_vertices()const;
+    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     double angle;
@@ -102,7 +102,7 @@ public:
     void setColor(sf::Color color);
 
 private:
-    void update_vertices()const;
+    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 
     double size;
@@ -124,7 +124,7 @@ public:
     void addMarker(const Eigen::Vector2d& position);
 
 private:
-    void update_vertices()const;
+    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     double size;

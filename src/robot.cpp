@@ -13,13 +13,13 @@ Robot::Robot()
 }
 
 
-void Robot::step_model(const Eigen::Vector2d& target, double dt)
+void Robot::stepModel(const Eigen::Vector2d& target, double dt)
 {
     // Control as if you know the current pose and target exactly.
     // This is just to get the robot moving.
 
     Eigen::Vector2d disp = target - pose.position();
-    disp = pose.get_R().transpose() * disp;
+    disp = pose.rotation().transpose() * disp;
     double e_theta = std::atan2(disp.y(), disp.x());
 
     double kv = 2;
@@ -36,14 +36,8 @@ void Robot::step_model(const Eigen::Vector2d& target, double dt)
     if (vel.angular() < -wmax) vel.angular() = -wmax;
     if (vel.angular() > wmax) vel.angular() = wmax;
 
-    Eigen::Isometry2d dT = twist_to_transform(vel * dt).get_T();
-    pose.set_from_T(pose.get_T() * dT);
-}
-
-
-void step_state_estimation()
-{
-
+    Eigen::Isometry2d dT = twistToTransform(vel * dt).transform();
+    pose.setFromTransform(pose.transform() * dT);
 }
 
 

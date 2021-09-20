@@ -4,7 +4,7 @@
 #include <stack>
 
 
-sf::Vertex create_vertex(sf::Color color, const Eigen::Vector2d& pos)
+sf::Vertex createVertex(sf::Color color, const Eigen::Vector2d& pos)
 {
     sf::Vertex vertex;
     vertex.position.x = pos.x();
@@ -13,7 +13,7 @@ sf::Vertex create_vertex(sf::Color color, const Eigen::Vector2d& pos)
     return vertex;
 }
 
-sf::Vertex create_vertex(sf::Color color, double x, double y)
+sf::Vertex createVertex(sf::Color color, double x, double y)
 {
     sf::Vertex vertex;
     vertex.position.x = x;
@@ -22,19 +22,19 @@ sf::Vertex create_vertex(sf::Color color, double x, double y)
     return vertex;
 }
 
-void add_triangle(
+void addTriangle(
     sf::VertexArray& vertex_array,
     sf::Color color,
     const Eigen::Vector2d& p1,
     const Eigen::Vector2d& p2,
     const Eigen::Vector2d& p3)
 {
-    vertex_array.append(create_vertex(color, p1));
-    vertex_array.append(create_vertex(color, p2));
-    vertex_array.append(create_vertex(color, p3));
+    vertex_array.append(createVertex(color, p1));
+    vertex_array.append(createVertex(color, p2));
+    vertex_array.append(createVertex(color, p3));
 }
 
-void add_quad(
+void addQuad(
     sf::VertexArray& vertex_array,
     sf::Color color,
     const Eigen::Vector2d& p1,
@@ -42,22 +42,22 @@ void add_quad(
     const Eigen::Vector2d& p3,
     const Eigen::Vector2d& p4)
 {
-    vertex_array.append(create_vertex(color, p1));
-    vertex_array.append(create_vertex(color, p2));
-    vertex_array.append(create_vertex(color, p3));
-    vertex_array.append(create_vertex(color, p1));
-    vertex_array.append(create_vertex(color, p3));
-    vertex_array.append(create_vertex(color, p4));
+    vertex_array.append(createVertex(color, p1));
+    vertex_array.append(createVertex(color, p2));
+    vertex_array.append(createVertex(color, p3));
+    vertex_array.append(createVertex(color, p1));
+    vertex_array.append(createVertex(color, p3));
+    vertex_array.append(createVertex(color, p4));
 }
 
-// Functions only used within the add_mesh function
+// Functions only used within the addMesh function
 
 namespace mesh_triangulation {
 
-static bool vertex_on_the_left(const Eigen::Vector2d& first, const Eigen::Vector2d& second, const Eigen::Vector2d& query)
+static bool vertexOnTheLeft(const Eigen::Vector2d& first, const Eigen::Vector2d& second, const Eigen::Vector2d& query)
 {
     Eigen::Vector2d dif = second - first;
-    Eigen::Vector2d perp = get_S(1)*dif;
+    Eigen::Vector2d perp = crossProductMatrix(1)*dif;
     // Perp is to the left of the first displacmenet
     // A positive component along this will indicate the query point is to the left
     dif = query - second;
@@ -65,17 +65,17 @@ static bool vertex_on_the_left(const Eigen::Vector2d& first, const Eigen::Vector
     return (component > 0);
 }
 
-static bool triangle_valid(size_t i, size_t j, size_t k, const std::vector<Eigen::Vector2d>& vertices)
+static bool triangleValid(size_t i, size_t j, size_t k, const std::vector<Eigen::Vector2d>& vertices)
 {
     // 1. Triangle is clockwise
-    if (vertex_on_the_left(vertices[i], vertices[j], vertices[k])) return false;
+    if (vertexOnTheLeft(vertices[i], vertices[j], vertices[k])) return false;
 
     // 2. No self-intersection
     for (size_t q = j+1; q < vertices.size(); q++) {
         if (q==k) continue;
-        if (vertex_on_the_left(vertices[i], vertices[j], vertices[q])) continue;
-        if (vertex_on_the_left(vertices[j], vertices[k], vertices[q])) continue;
-        if (vertex_on_the_left(vertices[k], vertices[i], vertices[q])) continue;
+        if (vertexOnTheLeft(vertices[i], vertices[j], vertices[q])) continue;
+        if (vertexOnTheLeft(vertices[j], vertices[k], vertices[q])) continue;
+        if (vertexOnTheLeft(vertices[k], vertices[i], vertices[q])) continue;
         return false;
     }
 
@@ -84,7 +84,7 @@ static bool triangle_valid(size_t i, size_t j, size_t k, const std::vector<Eigen
 
 } // namespace mesh_triangulation
 
-void add_mesh(
+void addMesh(
     sf::VertexArray& vertex_array,
     const Pose& pose,
     const std::vector<Eigen::Vector2d>& vertices,
@@ -111,11 +111,11 @@ void add_mesh(
         c = 2;
         bool valid = true;
         while (c!= current.size()) {
-            bool current_valid = triangle_valid(current[a], current[b], current[c], vertices);
+            bool current_valid = triangleValid(current[a], current[b], current[c], vertices);
             if (current_valid) {
-                vertex_array.append(create_vertex(color, transform_point(pose, vertices[current[a]])));
-                vertex_array.append(create_vertex(color, transform_point(pose, vertices[current[b]])));
-                vertex_array.append(create_vertex(color, transform_point(pose, vertices[current[c]])));
+                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[a]])));
+                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[b]])));
+                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[c]])));
 
                 if (!valid) {
                     valid = true;
@@ -145,7 +145,7 @@ void add_mesh(
     }
 }
 
-void add_marker(
+void addMarker(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double size,
@@ -172,10 +172,10 @@ void add_marker(
 
     Pose pose;
     pose.position() = pos;
-    add_mesh(vertex_array, pose, vertices, color);
+    addMesh(vertex_array, pose, vertices, color);
 }
 
-void add_circle(
+void addCircle(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double radius,
@@ -183,15 +183,15 @@ void add_circle(
     size_t n)
 {
     for (size_t i = 0; i < n; i++) {
-        vertex_array.append(create_vertex(color, pos));
+        vertex_array.append(createVertex(color, pos));
         Eigen::Vector2d p1 = pos + radius*get_direction(i*2*M_PI/n);
         Eigen::Vector2d p2 = pos + radius*get_direction(((i+1)%n)*2*M_PI/n);
-        vertex_array.append(create_vertex(color, p2));
-        vertex_array.append(create_vertex(color, p1));
+        vertex_array.append(createVertex(color, p2));
+        vertex_array.append(createVertex(color, p1));
     }
 }
 
-void add_arrow(
+void addArrow(
     sf::VertexArray& vertex_array,
     const Pose& pose,
     double length,
@@ -210,11 +210,11 @@ void add_arrow(
     vertices.push_back(Eigen::Vector2d(length-head_length, -line_width/2));
     vertices.push_back(Eigen::Vector2d(0, -line_width/2));
 
-    add_mesh(vertex_array, pose, vertices, color);
+    addMesh(vertex_array, pose, vertices, color);
 }
 
 
-void add_rot_arrow(
+void addRotArrow(
     sf::VertexArray& vertex_array,
     const Pose& pose,
     double angle,
@@ -233,7 +233,7 @@ void add_rot_arrow(
     for (double a = 0; a < std::fabs(angle); a += angle_increment) {
         double next_angle = a + angle_increment;
         if (next_angle > std::fabs(angle)) next_angle = std::fabs(angle);
-        add_quad(vertex_array, color,
+        addQuad(vertex_array, color,
             distance*get_direction(a),
             distance*get_direction(next_angle),
             (distance+line_width)*get_direction(next_angle),
@@ -242,8 +242,8 @@ void add_rot_arrow(
     }
 
     Eigen::Vector2d n1 = get_direction(std::fabs(angle));
-    Eigen::Vector2d n2 = get_S(1) * n1;
-    add_triangle(vertex_array, color,
+    Eigen::Vector2d n2 = crossProductMatrix(1) * n1;
+    addTriangle(vertex_array, color,
         (distance - (head_width-line_width)/2) * n1,
         (distance + line_width/2) * n1 + head_length * n2,
         (distance + (head_width+line_width)/2) * n1

@@ -12,13 +12,13 @@
 // a x sk = S(a)s = b -> S(a) is a 2x1 matrix (vector)
 // sk x a = S(s)a = b -> S(s) is a 2x2 matrix
 
-Eigen::Vector2d get_S(const Eigen::Vector2d &vector)
+Eigen::Vector2d crossProductMatrix(const Eigen::Vector2d &vector)
 {
     // S(v)s = v x sk = - sk x v = rotate clockwise
     return Eigen::Vector2d(vector(1), -vector(0));
 }
 
-Eigen::Matrix2d get_S(double scalar)
+Eigen::Matrix2d crossProductMatrix(double scalar)
 {
     // Rotate anticlockwise, and scale by scalar
     Eigen::Matrix2d S;
@@ -29,7 +29,7 @@ Eigen::Matrix2d get_S(double scalar)
 
 
 // Rotation matrix
-Eigen::Matrix2d Pose::get_R()const
+Eigen::Matrix2d Pose::rotation()const
 {
     Eigen::Rotation2Dd asdf;
     double theta = x[2];
@@ -40,7 +40,7 @@ Eigen::Matrix2d Pose::get_R()const
 }
 
 // Homogeneous transformation
-Eigen::Isometry2d Pose::get_T()const
+Eigen::Isometry2d Pose::transform()const
 {
     Eigen::Isometry2d T;
     T.setIdentity();
@@ -50,17 +50,17 @@ Eigen::Isometry2d Pose::get_T()const
 }
 
 // Spatial velocity transform
-Eigen::Matrix3d Pose::get_X()const
+Eigen::Matrix3d Pose::velocityTransform()const
 {
     Eigen::Matrix3d X;
-    X.topLeftCorner(2,2) = get_R().transpose();
-    X.topRightCorner(2,1) = -get_R().transpose() * get_S(position());
+    X.topLeftCorner(2,2) = rotation().transpose();
+    X.topRightCorner(2,1) = -rotation().transpose() * crossProductMatrix(position());
     X.bottomLeftCorner(1,2).setZero();
     X.bottomRightCorner(1,1).setIdentity();
     return X;
 }
 
-void Pose::set_from_T(const Eigen::Isometry2d &T)
+void Pose::setFromTransform(const Eigen::Isometry2d &T)
 {
     position() = T.translation();
     Eigen::Matrix2d R = T.rotation().matrix();
@@ -69,13 +69,13 @@ void Pose::set_from_T(const Eigen::Isometry2d &T)
 
 Pose operator*(const Pose& lhs, const Pose& rhs)
 {
-    Eigen::Isometry2d T = lhs.get_T() * rhs.get_T();
+    Eigen::Isometry2d T = lhs.transform() * rhs.transform();
     Pose pose;
-    pose.set_from_T(T);
+    pose.setFromTransform(T);
     return pose;
 }
 
-Pose twist_to_transform(const Velocity& twist)
+Pose twistToTransform(const Velocity& twist)
 {
     Pose pose;
     if (twist.angular() == 0) {
@@ -84,12 +84,13 @@ Pose twist_to_transform(const Velocity& twist)
     }
     double theta = twist.angular();
     Eigen::Vector2d v_hat = twist.linear() / theta;
-    pose.position() = v_hat*std::sin(theta) + get_S(1)*v_hat*(1-std::cos(theta));
+    auto S = crossProductMatrix(1);
+    pose.position() = v_hat*std::sin(theta) + S*v_hat*(1-std::cos(theta));
     pose.orientation() = twist.angular();
     return pose;
 }
 
-Velocity transform_to_twist(const Pose& pose)
+Velocity transformToTwist(const Pose& pose)
 {
     Velocity vel;
     double theta = pose.orientation();
@@ -99,13 +100,14 @@ Velocity transform_to_twist(const Pose& pose)
     }
 
     Eigen::Matrix2d M = (std::sin(theta)/(1-std::cos(theta))) * Eigen::Matrix2d::Identity();
-    vel.linear() = 0.5*(M - get_S(1))*pose.position();
+    auto S = crossProductMatrix(1);
+    vel.linear() = 0.5*(M - S)*pose.position();
     vel.angular() = theta;
     return vel;
 }
 
-Eigen::Vector2d transform_point(const Pose& pose, const Eigen::Vector2d& point)
+Eigen::Vector2d transformPoint(const Pose& pose, const Eigen::Vector2d& point)
 {
-    Eigen::Vector3d result = pose.get_T() * Eigen::Vector3d(point.x(), point.y(), 1);
+    Eigen::Vector3d result = pose.transform() * Eigen::Vector3d(point.x(), point.y(), 1);
     return Eigen::Vector2d(result.x(), result.y());
 }

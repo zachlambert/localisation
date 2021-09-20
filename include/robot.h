@@ -22,8 +22,7 @@ public:
         bool enable_velocity_marker;
     } to_draw;
 
-    void step_model(const Eigen::Vector2d& target, double dt);
-    void step_state_estimation();
+    void stepModel(const Eigen::Vector2d& target, double dt);
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;

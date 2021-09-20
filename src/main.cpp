@@ -21,7 +21,7 @@ int main()
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localistaion");
 
     Terrain terrain;
-    create_terrain(terrain);
+    createTerrain(terrain);
 
     Camera camera;
 
@@ -49,7 +49,7 @@ int main()
             }
             if (event.type == sf::Event::KeyReleased) {
                 if (event.key.code == sf::Keyboard::Return) {
-                    robot.step_model(target.position, 0.1);
+                    robot.stepModel(target.position, 0.1);
                     scan.pose = robot.pose;
                     scan.sample(terrain);
                 }

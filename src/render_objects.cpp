@@ -51,12 +51,12 @@ void Arrow::setFillColor(sf::Color color)
     dirty = true;
 }
 
-void Arrow::update_vertices()const
+void Arrow::updateVertices()const
 {
     if (!dirty) return;
 
     vertex_array.clear();
-    add_arrow(
+    addArrow(
         vertex_array,
         Pose(),
         length,
@@ -70,7 +70,7 @@ void Arrow::update_vertices()const
 
 void Arrow::draw(sf::RenderTarget& target, sf::RenderStates states)const
 {
-    update_vertices();
+    updateVertices();
     states.transform *= getTransform();
     target.draw(vertex_array, states);
 }
@@ -126,12 +126,12 @@ void RotArrow::setFillColor(sf::Color color)
     dirty = true;
 }
 
-void RotArrow::update_vertices()const
+void RotArrow::updateVertices()const
 {
     if (!dirty) return;
 
     vertex_array.clear();
-    add_rot_arrow(
+    addRotArrow(
         vertex_array,
         Pose(),
         angle,
@@ -146,7 +146,7 @@ void RotArrow::update_vertices()const
 
 void RotArrow::draw(sf::RenderTarget& target, sf::RenderStates states)const
 {
-    update_vertices();
+    updateVertices();
     states.transform *= getTransform();
     target.draw(vertex_array, states);
 }
@@ -271,12 +271,12 @@ void Marker::setColor(sf::Color color)
     dirty = true;
 }
 
-void Marker::update_vertices()const
+void Marker::updateVertices()const
 {
     if (!dirty) return;
 
     vertex_array.clear();
-    add_marker(
+    addMarker(
         vertex_array,
         Eigen::Vector2d(0,0),
         size,
@@ -288,7 +288,7 @@ void Marker::update_vertices()const
 
 void Marker::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-    update_vertices();
+    updateVertices();
     states.transform *= getTransform();
     target.draw(vertex_array, states);
 }
@@ -334,13 +334,13 @@ void MarkerArray::addMarker(const Eigen::Vector2d& position)
     dirty = true;
 }
 
-void MarkerArray::update_vertices()const
+void MarkerArray::updateVertices()const
 {
     if (!dirty) return;
 
     vertex_array.clear();
     for (const auto& marker: markers) {
-        add_marker(
+        ::addMarker(
             vertex_array,
             marker,
             size,
@@ -353,7 +353,7 @@ void MarkerArray::update_vertices()const
 
 void MarkerArray::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
-    update_vertices();
+    updateVertices();
     states.transform *= getTransform();
     target.draw(vertex_array, states);
 }
