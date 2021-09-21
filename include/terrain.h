@@ -27,10 +27,21 @@ public:
             vertices.push_back(Eigen::Vector2d(x, y));
         }
     };
+    struct Landmark {
+        Eigen::Vector2d pos;
+        // May add extra information later
+        Landmark(): pos() {}
+        Landmark(double x, double y): pos(x, y) {}
+    };
 
     Terrain();
     void addElement(const Element &element);
-    void setColor(sf::Color color);
+    void addLandmark(const Landmark &landmark);
+
+    void setTerrainColor(sf::Color color);
+    void setLandmarkColor(sf::Color color);
+    void setLandmarkSize(double size);
+
     double queryIntersection(const Pose& pose, double angle)const;
 
 private:
@@ -38,11 +49,14 @@ private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     // Render information
-    sf::Color color;
+    sf::Color terrain_color;
+    sf::Color landmark_color;
+    double landmark_size;
     mutable sf::VertexArray vertex_array;
     mutable bool dirty;
 
     std::vector<Element> elements;
+    std::vector<Landmark> landmarks;
 };
 
 

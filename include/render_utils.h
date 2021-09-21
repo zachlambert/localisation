@@ -46,6 +46,12 @@ void addCircle(
     sf::Color color,
     size_t n);
 
+void addSquare(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double size,
+    sf::Color color);
+
 void addArrow(
     sf::VertexArray& vertex_array,
     const Pose& pose,

@@ -19,6 +19,7 @@
   robot and provide test data for state estimation.
 - Be able to visualise all information relating to algorithms, including:
     - Raw measurements
+    - Extracted features
     - Pose esimates with covariance
     - Velocity estimates with covariance
     - Individual components of an update step, relating to specific measurements
@@ -30,9 +31,6 @@
 # Things to NOT do
 
 - Don't make it 3D
-- Don't implement feature extraction methods. Instead, model the feature
-  extraction process, eg: by having some arbitrary probability of incorrect
-  feature identification and feature matches.
 - Don't spend time optimising algorithms to be fast, such as using a quadtree
   for querying an occupancy grid. Keep it simple and focus on understanding
   the algorithms.
@@ -41,8 +39,7 @@
   However, do model uncertainty in this motion model, which is taken into
   account in p(x_k | u_k, x_{k-1})
 - Only use range measurements, and no more complex sensors. That means, no
-  colour information. This extra information is only relevant for feature
-  extraction, which we model instead of implementing.
+  colour information.
 - Don't model gps, imu, magnetometer or encoders/odometry.
     - Focus on state estimation via exteroceptive measurements.
     - The information provided by the proprioceptive sensors is used

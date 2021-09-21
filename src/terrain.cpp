@@ -10,19 +10,39 @@
 
 Terrain::Terrain()
 {
-    setColor(sf::Color(150, 150, 150));
+    setTerrainColor(sf::Color(150, 150, 150));
+    setLandmarkColor(sf::Color(220, 100, 220));
+    setLandmarkSize(0.2);
     vertex_array.setPrimitiveType(sf::Triangles);
 }
 
-void Terrain::addElement(const Element &element)
+void Terrain::addElement(const Element& element)
 {
     elements.push_back(element);
     dirty = true;
 }
 
-void Terrain::setColor(sf::Color color)
+void Terrain::addLandmark(const Landmark& landmark)
 {
-    this->color = color;
+    landmarks.push_back(landmark);
+    dirty = true;
+}
+
+void Terrain::setTerrainColor(sf::Color terrain_color)
+{
+    this->terrain_color = terrain_color;
+    dirty = true;
+}
+
+void Terrain::setLandmarkColor(sf::Color landmark_color)
+{
+    this->landmark_color = landmark_color;
+    dirty = true;
+}
+
+void Terrain::setLandmarkSize(double landmark_size)
+{
+    this->landmark_size = landmark_size;
     dirty = true;
 }
 
@@ -89,7 +109,15 @@ void Terrain::updateVertices()const
             vertex_array,
             pose,
             element.vertices,
-            color
+            terrain_color
+        );
+    }
+    for (const auto& landmark: landmarks) {
+        addSquare(
+            vertex_array,
+            landmark.pos,
+            landmark_size,
+            landmark_color
         );
     }
 
@@ -148,6 +176,12 @@ void createTerrain(Terrain& terrain)
         terrain.addElement(element);
     }
 
+    // Add landmarks to corners
+    terrain.addLandmark(Terrain::Landmark(x1, y1));
+    terrain.addLandmark(Terrain::Landmark(-x1, y1));
+    terrain.addLandmark(Terrain::Landmark(-x1, -y1));
+    terrain.addLandmark(Terrain::Landmark(x1, -y1));
+
     // Add an arbitrary element within
     {
         Terrain::Element element;
@@ -157,5 +191,12 @@ void createTerrain(Terrain& terrain)
         element.addVertex(1.5, 0.8);
         element.addVertex(1.1, -1.2);
         terrain.addElement(element);
+
+        // Add landmarks too
+        terrain.addLandmark(Terrain::Landmark(-1, -1));
+        terrain.addLandmark(Terrain::Landmark(-1.5, 1));
+        terrain.addLandmark(Terrain::Landmark(0, 1.2));
+        terrain.addLandmark(Terrain::Landmark(1.5, 0.8));
+        terrain.addLandmark(Terrain::Landmark(1.1, -1.2));
     }
 }

@@ -191,6 +191,27 @@ void addCircle(
     }
 }
 
+void addSquare(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double size,
+    sf::Color color)
+{
+    Eigen::Vector2d points[4];
+    for (size_t i = 0; i < 4; i++) {
+        points[i] = pos;
+        points[i].x() += size/2 * (i/2==0 ? -1 : 1);
+        points[i].y() += size/2 * (i%2==0 ? -1 : 1);
+    }
+    addQuad(
+        vertex_array,
+        color,
+        points[0],
+        points[1],
+        points[3],
+        points[2]);
+}
+
 void addArrow(
     sf::VertexArray& vertex_array,
     const Pose& pose,
