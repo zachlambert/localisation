@@ -32,7 +32,7 @@ void addMesh(
     const std::vector<Eigen::Vector2d>& vertices,
     sf::Color color);
 
-void addMarker(
+void addCross(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double size,
@@ -43,6 +43,14 @@ void addCircle(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double radius,
+    sf::Color color,
+    size_t n);
+
+void addRing(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double radius,
+    double thickness,
     sf::Color color,
     size_t n);
 

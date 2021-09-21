@@ -145,7 +145,7 @@ void addMesh(
     }
 }
 
-void addMarker(
+void addCross(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
     double size,
@@ -188,6 +188,32 @@ void addCircle(
         Eigen::Vector2d p2 = pos + radius*get_direction(((i+1)%n)*2*M_PI/n);
         vertex_array.append(createVertex(color, p2));
         vertex_array.append(createVertex(color, p1));
+    }
+}
+
+void addRing(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    double radius,
+    double thickness,
+    sf::Color color,
+    size_t n)
+{
+    if (thickness >= 2*radius) {
+        addCircle(vertex_array, pos, radius, color, n);
+        return;
+    }
+
+    for (size_t i = 0; i < n; i++) {
+        vertex_array.append(createVertex(color, pos));
+        double angle = i*2*M_PI/n;
+        double next = ((i+1)%n)*2*M_PI/n;
+        Eigen::Vector2d p[4];
+        p[0] = pos + (radius-thickness/2)*get_direction(angle);
+        p[1] = pos + (radius+thickness/2)*get_direction(next);
+        p[2] = pos + (radius+thickness/2)*get_direction(next);
+        p[3] = pos + (radius-thickness/2)*get_direction(angle);
+        addQuad(vertex_array, color, p[0], p[1], p[2], p[3]);
     }
 }
 

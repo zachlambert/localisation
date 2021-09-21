@@ -97,6 +97,21 @@ double Terrain::queryIntersection(const Pose& pose, double angle)const
 }
 
 
+void Terrain::getObservableLandmarks(const Pose& pose, std::vector<Landmark>& landmarks_out)const
+{
+    static constexpr double intersection_allowance = 0.1;
+    for (const auto& landmark: landmarks) {
+        Eigen::Vector2d disp = landmark.pos - pose.position();
+        double landmark_dist = disp.norm();
+        double angle = std::atan2(disp.y(), disp.x()) - pose.orientation();
+        double intersect_dist = queryIntersection(pose, angle);
+        if (landmark_dist + intersection_allowance < intersect_dist) {
+            landmarks_out.push_back(landmark);
+        }
+    }
+}
+
+
 void Terrain::updateVertices()const
 {
     if (!dirty) return;
@@ -124,7 +139,7 @@ void Terrain::updateVertices()const
     dirty = false;
 }
 
-void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states) const
+void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states)const
 {
     updateVertices();
     target.draw(vertex_array, states);

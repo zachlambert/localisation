@@ -16,6 +16,12 @@
 
 #include "geometry.h"
 
+struct Landmark {
+    Eigen::Vector2d pos;
+    // May add extra information later
+    Landmark(): pos() {}
+    Landmark(double x, double y): pos(x, y) {}
+};
 
 class Terrain: public sf::Drawable {
 public:
@@ -27,12 +33,6 @@ public:
             vertices.push_back(Eigen::Vector2d(x, y));
         }
     };
-    struct Landmark {
-        Eigen::Vector2d pos;
-        // May add extra information later
-        Landmark(): pos() {}
-        Landmark(double x, double y): pos(x, y) {}
-    };
 
     Terrain();
     void addElement(const Element &element);
@@ -43,6 +43,7 @@ public:
     void setLandmarkSize(double size);
 
     double queryIntersection(const Pose& pose, double angle)const;
+    void getObservableLandmarks(const Pose& pose, std::vector<Landmark>& landmarks)const;
 
 private:
     void updateVertices()const;

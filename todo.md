@@ -1,8 +1,8 @@
 
 # Landmarks
 
-[ ] Add landmarks to terrain definition
-[ ] Add a function to get all visible features, where a feature has
+[x] Add landmarks to terrain definition
+[X] Add a function to get all visible features, where a feature has
     a range, angle and descriptor vector.
 
 # Features
@@ -18,7 +18,7 @@
 # Visualisation
 
 [ ] Add covariance markers (ellipse for xy, segment for theta)
-[ ] Add visualisation of landmarks on map (squares).
+[x] Add visualisation of landmarks on map (squares).
 [ ] Add visualisation of features (raw measurements=circles, features=crosses).
 [ ] Have the FeatureExtractor draw identified features (circle outline).
 [ ] Have the FeatureMatcher draw lines between correspondances.
