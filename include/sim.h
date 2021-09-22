@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "geometry.h"
-#include "render_objects.h"
 #include "robot.h"
 #include "sensor.h"
 #include "terrain.h"
@@ -35,7 +34,7 @@ struct Sim: public sf::Drawable {
         robot.vel.linear() = Eigen::Vector2d(1, 0.2);
         robot.vel.angular() = 1;
 
-        lidar.setNumPoints(100);
+        lidar.setScanSize(100);
 
         Target target;
         target.pose.position() = Eigen::Vector2d(0, 0);
@@ -62,9 +61,11 @@ struct Sim: public sf::Drawable {
                 break;
             case 1:
                 lidar.sample(robot.pose, terrain);
+                lidar.sampleLandmarks(robot.pose, terrain);
                 break;
             case 2:
-                state_estimator.start(controller.command, &lidar.scan, dt);
+                state_estimator.start(controller.command, &lidar.landmarks, dt);
+                // state_estimator.start(controller.command, &lidar.scan, dt);
                 step_number++;
             case 3:
                 increment = state_estimator.step();
@@ -91,7 +92,6 @@ private:
         render_target.draw(state_estimator, states);
         render_target.draw(controller, states);
         render_target.draw(robot, states);
-        render_target.draw(lidar.scan, states);
         render_target.draw(target, states);
     }
 };

@@ -10,40 +10,50 @@
 
 Terrain::Terrain()
 {
-    setTerrainColor(sf::Color(150, 150, 150));
-    setLandmarkColor(sf::Color(220, 100, 220));
-    setLandmarkSize(0.2);
     vertex_array.setPrimitiveType(sf::Triangles);
+    setTerrainColor(sf::Color(150, 150, 150));
+
+    landmarks.setMarkerColor(sf::Color(220, 100, 220));
+    landmarks.setMarkerSize(0.2);
+    landmarks.setMarkerType(MarkerType::SQUARE);
 }
 
-void Terrain::addElement(const Element& element)
+Eigen::VectorXd randomLandmarkDescriptor()
+{
+    double u1 = 2*((double)rand() / RAND_MAX) - 1;
+    double u2 = 2*((double)rand() / RAND_MAX) - 1;
+    Eigen::VectorXd v;
+    v.resize(2);
+    v(0) = u1;
+    v(1) = u2;
+    v.normalize();
+    return v;
+}
+
+void Terrain::addElement(const Element& element, bool add_landmarks)
 {
     elements.push_back(element);
-    dirty = true;
-}
 
-void Terrain::addLandmark(const Landmark& landmark)
-{
-    landmarks.push_back(landmark);
-    dirty = true;
+    if (!add_landmarks) return;
+    for (const auto& vertex: element.vertices) {
+        landmarks.points.push_back(Point(element.pos + vertex));
+        landmarks.descriptors.push_back(randomLandmarkDescriptor());
+    }
 }
 
 void Terrain::setTerrainColor(sf::Color terrain_color)
 {
     this->terrain_color = terrain_color;
-    dirty = true;
 }
 
 void Terrain::setLandmarkColor(sf::Color landmark_color)
 {
     this->landmark_color = landmark_color;
-    dirty = true;
 }
 
 void Terrain::setLandmarkSize(double landmark_size)
 {
     this->landmark_size = landmark_size;
-    dirty = true;
 }
 
 
@@ -76,7 +86,7 @@ double Terrain::queryIntersection(const Pose& pose, double angle)const
     // If it becomes a bottleneck, implement a quadtree
 
     Eigen::Vector2d origin = pose.position();
-    Eigen::Vector2d direction = pose.rotation() * get_direction(angle);
+    Eigen::Vector2d direction = pose.rotation() * getDirection(angle);
 
     double min_dist = INFINITY;
     double dist;
@@ -97,52 +107,52 @@ double Terrain::queryIntersection(const Pose& pose, double angle)const
 }
 
 
-void Terrain::getObservableLandmarks(const Pose& pose, std::vector<Landmark>& landmarks_out)const
+void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out)const
 {
+    landmarks_out.true_pose = pose;
+    landmarks_out.points.clear();
+    landmarks_out.descriptors.clear();
+
     static constexpr double intersection_allowance = 0.1;
-    for (const auto& landmark: landmarks) {
-        Eigen::Vector2d disp = landmark.pos - pose.position();
-        double landmark_dist = disp.norm();
+    for (size_t i = 0; i < landmarks.points.size(); i++) {
+        std::cout << "i" << std::endl;
+
+        const Point& point = landmarks.points[i];
+        const Eigen::VectorXd& descriptor = landmarks.descriptors[i];
+
+        Eigen::Vector2d disp = point.pos - pose.position();
+        double dist = disp.norm();
         double angle = std::atan2(disp.y(), disp.x()) - pose.orientation();
         double intersect_dist = queryIntersection(pose, angle);
-        if (landmark_dist + intersection_allowance < intersect_dist) {
-            landmarks_out.push_back(landmark);
+
+        if (dist < intersect_dist + intersection_allowance) {
+            landmarks_out.points.push_back(Point(dist, angle));
+            std::cout << landmarks_out.points.back().pos.x() << ", ";
+            std::cout << landmarks_out.points.back().pos.y() << std::endl;
+            landmarks_out.descriptors.push_back(descriptor);
         }
     }
 }
 
 
-void Terrain::updateVertices()const
+void Terrain::updateVertices()
 {
-    if (!dirty) return;
-
     vertex_array.clear();
     for (const auto& element: elements) {
-        Pose pose;
-        pose.position() = element.pos;
         addMesh(
             vertex_array,
-            pose,
+            element.pos,
             element.vertices,
             terrain_color
         );
     }
-    for (const auto& landmark: landmarks) {
-        addSquare(
-            vertex_array,
-            landmark.pos,
-            landmark_size,
-            landmark_color
-        );
-    }
-
-    dirty = false;
+    landmarks.updateVertices();
 }
 
 void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states)const
 {
-    updateVertices();
     target.draw(vertex_array, states);
+    target.draw(landmarks, states);
 }
 
 
@@ -164,7 +174,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x2, -y2);
         element.addVertex(-x2, y2);
         element.addVertex(-x1, y2);
-        terrain.addElement(element);
+        terrain.addElement(element, false);
     }
     {
         Terrain::Element element;
@@ -172,7 +182,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x2, y2);
         element.addVertex(x2, y2);
         element.addVertex(x2, y1);
-        terrain.addElement(element);
+        terrain.addElement(element, false);
     }
     {
         Terrain::Element element;
@@ -180,7 +190,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x1, y2);
         element.addVertex(x2, y2);
         element.addVertex(x2, -y2);
-        terrain.addElement(element);
+        terrain.addElement(element, false);
     }
     {
         Terrain::Element element;
@@ -188,30 +198,58 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x2, -y1);
         element.addVertex(x2, -y2);
         element.addVertex(-x2, -y2);
-        terrain.addElement(element);
+        terrain.addElement(element, false);
     }
-
-    // Add landmarks to corners
-    terrain.addLandmark(Terrain::Landmark(x1, y1));
-    terrain.addLandmark(Terrain::Landmark(-x1, y1));
-    terrain.addLandmark(Terrain::Landmark(-x1, -y1));
-    terrain.addLandmark(Terrain::Landmark(x1, -y1));
 
     // Add an arbitrary element within
     {
         Terrain::Element element;
+        element.addVertex(-1, -1);
         element.addVertex(-1, -1);
         element.addVertex(-1.5, 1);
         element.addVertex(0, 1.2);
         element.addVertex(1.5, 0.8);
         element.addVertex(1.1, -1.2);
         terrain.addElement(element);
-
-        // Add landmarks too
-        terrain.addLandmark(Terrain::Landmark(-1, -1));
-        terrain.addLandmark(Terrain::Landmark(-1.5, 1));
-        terrain.addLandmark(Terrain::Landmark(0, 1.2));
-        terrain.addLandmark(Terrain::Landmark(1.5, 0.8));
-        terrain.addLandmark(Terrain::Landmark(1.1, -1.2));
     }
+
+    // Add detail to inner walls
+    { // Left
+        Terrain::Element element;
+        element.addVertex(-x1, y1);
+        element.addVertex(-x1+0.1, 0.5*y1);
+        element.addVertex(-x1+0.15, 0);
+        element.addVertex(-x1+0.15, -0.5*y1);
+        element.addVertex(-x1, -y1);
+        terrain.addElement(element);
+    }
+    { // Right
+        Terrain::Element element;
+        element.addVertex(x1, -y1);
+        element.addVertex(x1-0.08, -0.5*y1);
+        element.addVertex(x1-0.05, 0.1*y1);
+        element.addVertex(x1-0.2, 0.7*y1);
+        element.addVertex(x1, y1);
+        terrain.addElement(element);
+    }
+    { // Top
+        Terrain::Element element;
+        element.addVertex(x1, y1);
+        element.addVertex(0.8*x1, y1-0.1);
+        element.addVertex(0.1*x1, y1-0.2);
+        element.addVertex(-0.4*x1, y1-0.1);
+        element.addVertex(-x1, y1);
+        terrain.addElement(element);
+    }
+    { // Bottom
+        Terrain::Element element;
+        element.addVertex(-x1, -y1);
+        element.addVertex(-0.4*x1, -y1+0.1);
+        element.addVertex(0*x1, -y1+0.2);
+        element.addVertex(0.5*x1, -y1+0.1);
+        element.addVertex(x1, -y1);
+        terrain.addElement(element);
+    }
+
+    terrain.updateVertices();
 }

@@ -6,6 +6,8 @@
 #include <SFML/Graphics.hpp>
 
 #include "geometry.h"
+#include "render_utils.h"
+
 
 // For simplicity, having a single point type, which
 // has fields for all relevant information.
@@ -13,67 +15,51 @@
 
 struct Point {
     Eigen::Vector2d pos;
-    double dist;
-    double angle;
-    double intensity;
+
+    Point(): pos(0, 0) {}
+    Point(const Eigen::Vector2d& pos): pos(pos) {}
+    Point(double dist, double angle): pos(dist * getDirection(angle)) {}
+    double dist()const{ return pos.norm(); }
+    double angle()const{ return std::atan2(pos.y(), pos.x()); }
 };
 
 class PointCloud: public sf::Drawable {
 public:
     Pose pose;
+    Pose true_pose; // Used for rendering
     std::vector<Point> points;
     std::vector<Eigen::VectorXd> descriptors;
 
     PointCloud()
     {
         vertex_array.setPrimitiveType(sf::Triangles);
-        dirty = true;
     }
 
-    // Could put points behind accessor function which set dirty=true
-    // but the consistency of points being publish with pose and descriptors
-    // outweights the drawback of calling pointsUpdated() to update render
-    // information.
-    void pointsUpdated()
-    {
-        dirty = true;
-    }
+    void setMarkerColor(sf::Color marker_color) { this->marker_color = marker_color; }
+    void setMarkerSize(double marker_size) { this->marker_size = marker_size; }
+    void setMarkerType(MarkerType marker_type) { this->marker_type = marker_type; }
 
-    enum class MarkerType {
-        CROSS,
-        CIRCLE,
-        RING,
-        SQUARE
-    };
-
-    void setMarkerColor(sf::Color marker_color)
+    void updateVertices()
     {
-        this->marker_color = marker_color;
-        dirty = true;
-    }
-
-    void setMarkerSize(double marker_size)
-    {
-        this->marker_size = marker_size;
-        dirty = true;
-    }
-
-    void setMarkerType(MarkerType marker_type)
-    {
-        this->marker_type = marker_type;
-        dirty = true;
+        vertex_array.clear();
+        for (const auto& point: points) {
+            addMarker(vertex_array, point.pos, marker_type, marker_color, marker_size);
+        }
     }
 
 private:
-    void updateVertices()const;
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
+    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const
+    {
+        sf::Transform transform;
+        states.transform *= getRenderTransform(true_pose);
+        target.draw(vertex_array, states);
+    }
 
     sf::Color marker_color;
     double marker_size;
     MarkerType marker_type;
 
-    mutable bool dirty;
-    mutable sf::VertexArray vertex_array;
+    sf::VertexArray vertex_array;
 };
 
 #endif

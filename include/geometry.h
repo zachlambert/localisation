@@ -105,7 +105,7 @@ Velocity transformToTwist(const Pose& pose);
 
 Eigen::Vector2d transformPoint(const Pose& pose, const Eigen::Vector2d& point);
 
-inline Eigen::Vector2d get_direction(double angle)
+inline Eigen::Vector2d getDirection(double angle)
 {
     return Eigen::Vector2d(std::cos(angle), std::sin(angle));
 }

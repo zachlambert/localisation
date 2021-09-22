@@ -7,76 +7,60 @@
 #include "geometry.h"
 
 
-sf::Vertex createVertex(sf::Color color, const Eigen::Vector2d& pos);
+sf::Transform getRenderTransform(const Eigen::Vector2d& pos);
+sf::Transform getRenderTransform(const Pose& pose);
 
-sf::Vertex createVertex(sf::Color color, double x, double y);
+enum class MarkerType {
+    CROSS,
+    CIRCLE,
+    RING,
+    SQUARE
+};
 
-void addTriangle(
+void addMarker(
     sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& pos,
+    MarkerType type,
     sf::Color color,
-    const Eigen::Vector2d& p1,
-    const Eigen::Vector2d& p2,
-    const Eigen::Vector2d& p3);
-
-void addQuad(
-    sf::VertexArray& vertex_array,
-    sf::Color color,
-    const Eigen::Vector2d& p1,
-    const Eigen::Vector2d& p2,
-    const Eigen::Vector2d& p3,
-    const Eigen::Vector2d& p4);
+    double size);
 
 void addMesh(
     sf::VertexArray& vertex_array,
-    const Pose& pose,
+    const Eigen::Vector2d& pos,
     const std::vector<Eigen::Vector2d>& vertices,
     sf::Color color);
 
-void addCross(
-    sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double size,
-    double thickness,
-    sf::Color color);
+enum class LineType {
+    LINE,
+    ARROW
+};
 
-void addCircle(
+void addLine(
     sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double radius,
+    const Eigen::Vector2d& start,
+    const Eigen::Vector2d& end,
+    LineType type,
     sf::Color color,
-    size_t n);
+    double width);
 
-void addRing(
+void addEllipse(
     sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double radius,
-    double thickness,
-    sf::Color color,
-    size_t n);
-
-void addSquare(
-    sf::VertexArray& vertex_array,
-    const Eigen::Vector2d& pos,
-    double size,
-    sf::Color color);
-
-void addArrow(
-    sf::VertexArray& vertex_array,
-    const Pose& pose,
-    double length,
-    double line_width,
-    double head_width,
-    double head_length,
-    sf::Color color);
-
-void addRotArrow(
-    sf::VertexArray& vertex_array,
-    const Pose& pose,
+    double width,
+    double height,
     double angle,
-    double distance,
-    double line_width,
-    double head_width,
-    double head_length,
+    sf::Color color);
+
+void addCovarianceEllipse(
+    sf::VertexArray& vertex_array,
+    const Eigen::Matrix2d& cov,
+    double scaling,
+    sf::Color color);
+
+void addSegment(
+    sf::VertexArray& vertex_array,
+    double radius,
+    double orientation,
+    double width,
     sf::Color color);
 
 #endif

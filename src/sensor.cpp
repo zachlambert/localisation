@@ -8,27 +8,38 @@
 
 Lidar::Lidar()
 {
-    setNumPoints(20);
-    to_draw.measurements.setColor(sf::Color::Blue);
-    to_draw.measurements.setSize(0.1);
-    to_draw.measurements.setThickness(0.02);
+    setScanSize(20);
+    scan.setMarkerColor(sf::Color::Blue);
+    scan.setMarkerType(MarkerType::CIRCLE);
+    scan.setMarkerSize(0.04);
+
+    landmarks.setMarkerColor(sf::Color::Magenta);
+    landmarks.setMarkerType(MarkerType::RING);
+    landmarks.setMarkerSize(0.5);
 }
 
-void Lidar::setNumPoints(size_t num_points)
+void Lidar::setScanSize(size_t num_points)
 {
     scan.points.resize(num_points);
 }
 
 void Lidar::sample(const Pose& pose, const Terrain &terrain)
 {
-    scan.pose = pose;
+    scan.true_pose = pose;
 
     for (size_t i = 0; i < scan.points.size(); i++) {
         double angle = i*2*M_PI / scan.points.size();
-        scan.points[i].dist = terrain.queryIntersection(pose, angle);
-        scan.points[i].angle = angle;
+        scan.points[i] = Point(terrain.queryIntersection(pose, angle), angle);
         // TODO: Set using sensor model.
     }
 
-    scan.pointsUpdated();
+    scan.updateVertices();
+}
+
+void Lidar::sampleLandmarks(const Pose& pose, const Terrain &terrain)
+{
+    terrain.getObservableLandmarks(pose, landmarks);
+    // TODO: Add noise
+
+    landmarks.updateVertices();
 }

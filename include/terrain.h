@@ -15,13 +15,8 @@
 #include <SFML/Graphics.hpp>
 
 #include "geometry.h"
+#include "point_cloud.h"
 
-struct Landmark {
-    Eigen::Vector2d pos;
-    // May add extra information later
-    Landmark(): pos() {}
-    Landmark(double x, double y): pos(x, y) {}
-};
 
 class Terrain: public sf::Drawable {
 public:
@@ -35,29 +30,28 @@ public:
     };
 
     Terrain();
-    void addElement(const Element &element);
-    void addLandmark(const Landmark &landmark);
+    void addElement(const Element &element, bool add_landmarks=true);
 
     void setTerrainColor(sf::Color color);
     void setLandmarkColor(sf::Color color);
     void setLandmarkSize(double size);
 
     double queryIntersection(const Pose& pose, double angle)const;
-    void getObservableLandmarks(const Pose& pose, std::vector<Landmark>& landmarks)const;
+    void getObservableLandmarks(const Pose& pose, PointCloud& landmarks)const;
+
+    void updateVertices();
 
 private:
-    void updateVertices()const;
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
 
     // Render information
     sf::Color terrain_color;
     sf::Color landmark_color;
     double landmark_size;
-    mutable sf::VertexArray vertex_array;
-    mutable bool dirty;
+    sf::VertexArray vertex_array;
 
     std::vector<Element> elements;
-    std::vector<Landmark> landmarks;
+    PointCloud landmarks;
 };
 
 

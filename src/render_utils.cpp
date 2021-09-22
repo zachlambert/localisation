@@ -2,7 +2,26 @@
 #include "render_utils.h"
 
 #include <stack>
+#include <Eigen/Dense>
 
+
+// General useful functions
+
+sf::Transform getRenderTransform(const Eigen::Vector2d& pos)
+{
+    sf::Transform transform;
+    transform.translate(pos.x(), pos.y());
+    return transform;
+}
+
+
+sf::Transform getRenderTransform(const Pose& pose)
+{
+    sf::Transform transform;
+    transform.translate(pose.position().x(), pose.position().y());
+    transform.rotate(pose.orientation()*180/M_PI);
+    return transform;
+}
 
 sf::Vertex createVertex(sf::Color color, const Eigen::Vector2d& pos)
 {
@@ -50,7 +69,8 @@ void addQuad(
     vertex_array.append(createVertex(color, p4));
 }
 
-// Functions only used within the addMesh function
+
+// ===== addMesh() section =====
 
 namespace mesh_triangulation {
 
@@ -86,7 +106,7 @@ static bool triangleValid(size_t i, size_t j, size_t k, const std::vector<Eigen:
 
 void addMesh(
     sf::VertexArray& vertex_array,
-    const Pose& pose,
+    const Eigen::Vector2d& pos,
     const std::vector<Eigen::Vector2d>& vertices,
     sf::Color color)
 {
@@ -113,9 +133,9 @@ void addMesh(
         while (c!= current.size()) {
             bool current_valid = triangleValid(current[a], current[b], current[c], vertices);
             if (current_valid) {
-                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[a]])));
-                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[b]])));
-                vertex_array.append(createVertex(color, transformPoint(pose, vertices[current[c]])));
+                vertex_array.append(createVertex(color, pos + vertices[current[a]]));
+                vertex_array.append(createVertex(color, pos + vertices[current[b]]));
+                vertex_array.append(createVertex(color, pos + vertices[current[c]]));
 
                 if (!valid) {
                     valid = true;
@@ -145,6 +165,11 @@ void addMesh(
     }
 }
 
+
+// ===== addMarker() section =====
+
+namespace markers {
+
 void addCross(
     sf::VertexArray& vertex_array,
     const Eigen::Vector2d& pos,
@@ -170,9 +195,7 @@ void addCross(
     vertices.push_back(Eigen::Vector2d(-d2, -d3));
     vertices.push_back(Eigen::Vector2d(-d3, -d2));
 
-    Pose pose;
-    pose.position() = pos;
-    addMesh(vertex_array, pose, vertices, color);
+    addMesh(vertex_array, pos, vertices, color);
 }
 
 void addCircle(
@@ -184,8 +207,8 @@ void addCircle(
 {
     for (size_t i = 0; i < n; i++) {
         vertex_array.append(createVertex(color, pos));
-        Eigen::Vector2d p1 = pos + radius*get_direction(i*2*M_PI/n);
-        Eigen::Vector2d p2 = pos + radius*get_direction(((i+1)%n)*2*M_PI/n);
+        Eigen::Vector2d p1 = pos + radius*getDirection(i*2*M_PI/n);
+        Eigen::Vector2d p2 = pos + radius*getDirection(((i+1)%n)*2*M_PI/n);
         vertex_array.append(createVertex(color, p2));
         vertex_array.append(createVertex(color, p1));
     }
@@ -205,14 +228,13 @@ void addRing(
     }
 
     for (size_t i = 0; i < n; i++) {
-        vertex_array.append(createVertex(color, pos));
-        double angle = i*2*M_PI/n;
+        double angle = (i*2*M_PI)/n;
         double next = ((i+1)%n)*2*M_PI/n;
         Eigen::Vector2d p[4];
-        p[0] = pos + (radius-thickness/2)*get_direction(angle);
-        p[1] = pos + (radius+thickness/2)*get_direction(next);
-        p[2] = pos + (radius+thickness/2)*get_direction(next);
-        p[3] = pos + (radius-thickness/2)*get_direction(angle);
+        p[0] = pos + (radius-thickness/2)*getDirection(angle);
+        p[1] = pos + (radius-thickness/2)*getDirection(next);
+        p[2] = pos + (radius+thickness/2)*getDirection(next);
+        p[3] = pos + (radius+thickness/2)*getDirection(angle);
         addQuad(vertex_array, color, p[0], p[1], p[2], p[3]);
     }
 }
@@ -238,68 +260,135 @@ void addSquare(
         points[2]);
 }
 
-void addArrow(
+} // namespace marker
+
+void addMarker(
     sf::VertexArray& vertex_array,
-    const Pose& pose,
-    double length,
-    double line_width,
-    double head_width,
-    double head_length,
-    sf::Color color)
+    const Eigen::Vector2d& pos,
+    MarkerType type,
+    sf::Color color,
+    double size)
 {
-    std::vector<Eigen::Vector2d> vertices;
+    using namespace markers;
 
-    vertices.push_back(Eigen::Vector2d(0, line_width/2));
-    vertices.push_back(Eigen::Vector2d(length-head_length, line_width/2));
-    vertices.push_back(Eigen::Vector2d(length-head_length, head_width));
-    vertices.push_back(Eigen::Vector2d(length, 0));
-    vertices.push_back(Eigen::Vector2d(length-head_length, -head_width));
-    vertices.push_back(Eigen::Vector2d(length-head_length, -line_width/2));
-    vertices.push_back(Eigen::Vector2d(0, -line_width/2));
-
-    addMesh(vertex_array, pose, vertices, color);
+    switch (type) {
+        case MarkerType::CROSS:
+            addCross(vertex_array, pos, size, size*0.2, color);
+            break;
+        case MarkerType::CIRCLE:
+            addCircle(vertex_array, pos, size/2, color, 32);
+            break;
+        case MarkerType::RING:
+            addRing(vertex_array, pos, size/2, size*0.08, color, 32);
+            break;
+        case MarkerType::SQUARE:
+            addSquare(vertex_array, pos, size, color);
+            break;
+    }
 }
 
 
-void addRotArrow(
+// ===== addLine =====
+
+void addLine(
     sf::VertexArray& vertex_array,
-    const Pose& pose,
-    double angle,
-    double distance,
-    double line_width,
-    double head_width,
-    double head_length,
-    sf::Color color)
+    const Eigen::Vector2d& start,
+    const Eigen::Vector2d& end,
+    LineType type,
+    sf::Color color,
+    double width)
 {
-    static constexpr double angle_increment = M_PI/20;
-
-    if (angle == 0) return;
-    if (angle > 1.5*M_PI) angle = 1.5*M_PI;
-    if (angle < -1.5*M_PI) angle = -1.5*M_PI;
-
-    for (double a = 0; a < std::fabs(angle); a += angle_increment) {
-        double next_angle = a + angle_increment;
-        if (next_angle > std::fabs(angle)) next_angle = std::fabs(angle);
-        addQuad(vertex_array, color,
-            distance*get_direction(a),
-            distance*get_direction(next_angle),
-            (distance+line_width)*get_direction(next_angle),
-            (distance+line_width)*get_direction(a)
-        );
-    }
-
-    Eigen::Vector2d n1 = get_direction(std::fabs(angle));
+    Eigen::Vector2d n1 = (end - start).normalized();
     Eigen::Vector2d n2 = crossProductMatrix(1) * n1;
-    addTriangle(vertex_array, color,
-        (distance - (head_width-line_width)/2) * n1,
-        (distance + line_width/2) * n1 + head_length * n2,
-        (distance + (head_width+line_width)/2) * n1
-    );
+    double line_length = (end - start).norm();
 
-    if (angle < 0) {
-        for (size_t i = 0; i < vertex_array.getVertexCount(); i++) {
-            vertex_array[i].position.y *= -1;
-        }
+    if (type == LineType::ARROW) {
+        double head_width = width*2.5;
+        double head_length = head_width;
+        if (head_length > line_length) head_length = line_length;
+        addTriangle(
+            vertex_array,
+            color,
+            end,
+            end + n2*head_width/2 - n1*head_length,
+            end - n2*head_width/2 - n1*head_length);
+
+        line_length -= head_length;
+    }
+
+    if (line_length < 1e-4) return;
+
+    addQuad(
+        vertex_array,
+        color,
+        start + n2*width/2,
+        start + n1*line_length + n2*width/2,
+        start + n1*line_length - n2*width/2,
+        start - n2*width/2);
+}
+
+
+// ===== Other shape =====
+
+void addEllipse(
+    sf::VertexArray& vertex_array,
+    double width,
+    double height,
+    double orientation,
+    sf::Color color)
+{
+    Eigen::Vector2d u1 = getDirection(orientation);
+    Eigen::Vector2d u2 = crossProductMatrix(1) * u1;
+    u1 *= width/2;
+    u2 *= height/2;
+    auto get_point = [u1, u2](double angle) {
+        return u1 * std::cos(angle) + u2 * std::sin(angle);
+    };
+
+    constexpr size_t n = 32;
+    for (size_t i = 0; i < n; i++) {
+        double angle = i*2*M_PI / n;
+        double angle2 = ((i+1)%n)*2*M_PI / n;
+        addTriangle(vertex_array, color,
+            Eigen::Vector2d(0, 0),
+            get_point(angle),
+            get_point(angle2));
     }
 }
 
+void addCovarianceEllipse(
+    sf::VertexArray& vertex_array,
+    const Eigen::Matrix2d& cov,
+    double scaling,
+    sf::Color color)
+{
+
+    Eigen::EigenSolver<Eigen::Matrix2d> eigensolver(cov);
+    auto u1 = eigensolver.eigenvectors().col(0).real();
+    auto u2 = eigensolver.eigenvectors().col(1).real();
+    double v1 = eigensolver.eigenvalues()(0).real();
+    double v2 = eigensolver.eigenvalues()(1).real();
+    double angle = std::atan2(u1.y(), u1.x());
+    double width = v1 * scaling;
+    double height = v2 * scaling;
+    addEllipse(vertex_array, width, height, angle, color);
+}
+
+void addSegment(
+    sf::VertexArray& vertex_array,
+    double radius,
+    double orientation,
+    double width,
+    sf::Color color)
+{
+    constexpr size_t n = 16;
+    const double delta_angle = width / n;
+    double angle = orientation - delta_angle/2;
+    for (size_t i = 0; i < n; i++) {
+        addTriangle(vertex_array, color,
+            Eigen::Vector2d(0, 0),
+            radius * getDirection(angle),
+            radius * getDirection(angle+delta_angle));
+        angle += delta_angle;
+    }
+}

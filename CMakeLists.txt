@@ -16,7 +16,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(SRC
     src/geometry.cpp
     src/main.cpp
-    src/render_objects.cpp
     src/render_utils.cpp
     src/robot.cpp
     src/sensor.cpp

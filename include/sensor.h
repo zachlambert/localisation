@@ -7,24 +7,18 @@
 
 #include "geometry.h"
 #include "terrain.h"
-#include "render_objects.h"
 #include "point_cloud.h"
 
 
 class Lidar {
 public:
     PointCloud scan;
-
-    mutable struct {
-        sf::MarkerArray measurements;
-    } to_draw;
+    PointCloud landmarks;
 
     Lidar();
-    void setNumPoints(size_t num_points);
+    void setScanSize(size_t num_points);
     void sample(const Pose& pose, const Terrain &terrain);
-
-private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
+    void sampleLandmarks(const Pose& pose, const Terrain &terrain);
 };
 
 #endif
