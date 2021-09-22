@@ -14,6 +14,10 @@ public:
     Pose() {
         x.setZero();
     }
+    Pose(const Eigen::Isometry2d& transform)
+    {
+        setFromTransform(transform);
+    }
 
     // Access state vector
     const Eigen::Vector3d &state()const { return x; }
