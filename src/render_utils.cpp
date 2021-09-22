@@ -383,7 +383,7 @@ void addSegment(
 {
     constexpr size_t n = 16;
     const double delta_angle = width / n;
-    double angle = orientation - delta_angle/2;
+    double angle = orientation - width/2;
     for (size_t i = 0; i < n; i++) {
         addTriangle(vertex_array, color,
             Eigen::Vector2d(0, 0),

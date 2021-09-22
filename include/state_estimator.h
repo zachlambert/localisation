@@ -31,11 +31,11 @@ public:
         bool increment = true;
         switch (step_number) {
             case 0:
-                // Convert ranges -> points and find features if enabled.
-                // TODO point_cloud.create(scan);
+                predict();
                 break;
             case 1:
-                // Align previous scan and new scan to get an edge constraint
+                update();
+                break;
             default:
                 return true;
         }
@@ -47,6 +47,20 @@ public:
         return false;
     }
 
+    void predict()
+    {
+        Velocity twist = command*dt;
+        twist.linear().x() += 0.1*dt; // TODO sample noise properly
+        twist.linear().y() -= 0.2*dt;
+        twist.angular() += 0.1*dt;
+        pose.setFromTransform(pose.transform() * twistToTransform(twist).transform());
+    }
+
+    void update()
+    {
+
+    }
+
     // Outputs
     Pose pose;
     Eigen::Matrix3d covariance;
@@ -55,7 +69,21 @@ public:
     {
         vertex_array.clear();
 
-        const double radius = 0.1;
+        const double cov_position_scaling = 40;
+        const double cov_orientation_scaling = 10;
+        addCovarianceEllipse(
+            vertex_array,
+            covariance.block<2,2>(0,0),
+            cov_position_scaling,
+            sf::Color::Green);
+        addSegment(
+            vertex_array,
+            0.5,
+            0,
+            cov_orientation_scaling * covariance(2,2),
+            sf::Color::Blue);
+
+        const double radius = 0.05;
         addEllipse(
             vertex_array,
             2*radius,
@@ -65,24 +93,10 @@ public:
         addLine(
             vertex_array,
             Eigen::Vector2d(0,0),
-            Eigen::Vector2d(3*radius, 0),
+            Eigen::Vector2d(5*radius, 0),
             LineType::ARROW,
             sf::Color::Black,
-            0.5*radius);
-
-        const double cov_position_scaling = 1;
-        const double cov_orientation_scaling = 1;
-        addCovarianceEllipse(
-            vertex_array,
-            covariance.block<2,2>(0,0),
-            cov_position_scaling,
-            sf::Color::Green);
-        addSegment(
-            vertex_array,
-            0.5,
-            pose.orientation(),
-            cov_orientation_scaling * covariance(2,2),
-            sf::Color::Cyan);
+            radius);
     }
 
 protected:

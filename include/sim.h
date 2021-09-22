@@ -34,6 +34,9 @@ struct Sim: public sf::Drawable {
         robot.vel.linear() = Eigen::Vector2d(1, 0.2);
         robot.vel.angular() = 1;
 
+        state_estimator.pose = robot.pose;
+        state_estimator.covariance = Eigen::Vector3d(0.01, 0.01, 0.1).asDiagonal();
+
         lidar.setScanSize(100);
 
         Target target;
