@@ -67,7 +67,7 @@ struct Sim: public sf::Drawable {
                 lidar.sampleLandmarks(robot.pose, terrain);
                 break;
             case 2:
-                state_estimator.start(controller.command, &lidar.landmarks, dt);
+                state_estimator.start(controller.command, &lidar.landmarks, &terrain, dt);
                 // state_estimator.start(controller.command, &lidar.scan, dt);
                 step_number++;
             case 3:

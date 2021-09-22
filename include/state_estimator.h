@@ -7,6 +7,7 @@
 
 #include "geometry.h"
 #include "point_cloud.h"
+#include "terrain.h"
 
 
 class StateEstimator: public sf::Drawable {
@@ -17,10 +18,11 @@ public:
         vertex_array.setPrimitiveType(sf::Triangles);
     }
 
-    void start(const Velocity& command, const PointCloud* scan, double dt)
+    void start(const Velocity& command, const PointCloud* scan, const Terrain* terrain, double dt)
     {
         this->command = command;
         this->scan = scan;
+        this->terrain = terrain;
         this->dt = dt;
         step_number = 0;
     }
@@ -113,6 +115,7 @@ protected:
     // Inputs
     Velocity command;
     const PointCloud* scan;
+    const Terrain* terrain;
     double dt;
 
     int step_number;
