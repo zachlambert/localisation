@@ -16,29 +16,19 @@ Lidar::Lidar()
 
 void Lidar::setNumPoints(size_t num_points)
 {
-    scan.resize(num_points);
-    scan.setZero();
+    scan.points.resize(num_points);
 }
 
 void Lidar::sample(const Pose& pose, const Terrain &terrain)
 {
-    this->pose = pose;
+    scan.pose = pose;
 
-    for (size_t i = 0; i < scan.size(); i++) {
-        scan(i) = terrain.queryIntersection(pose, i*2*M_PI / scan.size());
+    for (size_t i = 0; i < scan.points.size(); i++) {
+        double angle = i*2*M_PI / scan.points.size();
+        scan.points[i].dist = terrain.queryIntersection(pose, angle);
+        scan.points[i].angle = angle;
         // TODO: Set using sensor model.
     }
 
-    to_draw.measurements.clearMarkers();
-    for (size_t i = 0; i < scan.size(); i++) {
-        to_draw.measurements.addMarker(
-            scan(i) * get_direction(pose.orientation() + (i*2*M_PI/scan.size()))
-        );
-    }
-}
-
-void Lidar::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-    to_draw.measurements.setPosition(pose.position().x(), pose.position().y());
-    target.draw(to_draw.measurements, states);
+    scan.pointsUpdated();
 }

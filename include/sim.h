@@ -64,7 +64,7 @@ struct Sim: public sf::Drawable {
                 lidar.sample(robot.pose, terrain);
                 break;
             case 2:
-                state_estimator.start(controller.command, lidar.scan, dt);
+                state_estimator.start(controller.command, &lidar.scan, dt);
                 step_number++;
             case 3:
                 increment = state_estimator.step();
@@ -91,7 +91,7 @@ private:
         render_target.draw(state_estimator, states);
         render_target.draw(controller, states);
         render_target.draw(robot, states);
-        render_target.draw(lidar, states);
+        render_target.draw(lidar.scan, states);
         render_target.draw(target, states);
     }
 };

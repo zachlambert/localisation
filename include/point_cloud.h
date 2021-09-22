@@ -18,7 +18,7 @@ struct Point {
     double intensity;
 };
 
-class PointCloud {
+class PointCloud: public sf::Drawable {
 public:
     Pose pose;
     std::vector<Point> points;

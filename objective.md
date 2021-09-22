@@ -47,3 +47,6 @@
     - Don't bother with pose tracking. Instead, we take this into account
       with our motion model. Input u_k is the target velocity, and there is
       some error between this and the actual velocity.
+- Don't implement lots of different types of state estimator. Implement what
+  you deem to be the "best". If you find this has some drawbacks and want to
+  test an alternative, then implement this one too.

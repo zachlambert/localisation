@@ -8,11 +8,12 @@
 #include "geometry.h"
 #include "terrain.h"
 #include "render_objects.h"
+#include "point_cloud.h"
 
 
-class Lidar: public sf::Drawable {
+class Lidar {
 public:
-    Eigen::VectorXd scan;
+    PointCloud scan;
 
     mutable struct {
         sf::MarkerArray measurements;
@@ -24,8 +25,6 @@ public:
 
 private:
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
-
-    Pose pose;
 };
 
 #endif

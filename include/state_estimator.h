@@ -7,6 +7,7 @@
 
 #include "geometry.h"
 #include "render_objects.h"
+#include "point_cloud.h"
 
 
 class StateEstimator: public sf::Drawable {
@@ -15,7 +16,7 @@ public:
     {
     }
 
-    void start(const Velocity& command, const Eigen::VectorXd& scan, double dt)
+    void start(const Velocity& command, const PointCloud* scan, double dt)
     {
         this->command = command;
         this->scan = scan;
@@ -63,7 +64,7 @@ protected:
 
     // Inputs
     Velocity command;
-    Eigen::VectorXd scan;
+    const PointCloud* scan;
     double dt;
 
     int step_number;
