@@ -1,6 +1,7 @@
 #ifndef STEP_H
 #define STEP_H
 
+#include <string>
 #include <vector>
 
 
@@ -14,29 +15,48 @@ public:
     bool step()
     {
         if (step_number >= steps.size()) return true;
+
         // Class T will extend Step<T>. Then, this static cast will compile.
-        bool step_finished = ((static_cast<T*>(this))->*steps[step_number])();
-        if (step_finished) {
+        bool current_step_done = ((static_cast<T*>(this))->*steps[step_number])();
+
+        if (current_step_done) {
             step_number++;
+            if (step_number == steps.size()) {
+                is_started = false;
+                return true;
+            }
         }
-        return step_number == steps.size();;
+
+        return false;
     }
     void stepRemaining()
     {
         while (!step()) {}
     }
+
+    bool started()
+    {
+        return is_started;
+    }
+    const std::string& stepName()
+    {
+        return step_names[step_number];
+    }
 protected:
     void start()
     {
         step_number = 0;
+        is_started = true;
     }
     void addStep(step_t step)
     {
         steps.push_back(step);
     }
 
-    int step_number;
+    int step_number = 0;
     std::vector<step_t> steps;
+    std::vector<std::string> step_names;
+    bool is_started = false;
 };
 
 

@@ -17,7 +17,6 @@ set(SRC
     src/geometry.cpp
     src/main.cpp
     src/render_utils.cpp
-    src/robot.cpp
     src/sensor.cpp
     src/terrain.cpp
     src/renderer.cpp

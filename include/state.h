@@ -20,7 +20,7 @@ struct State: public Step<State> {
     Terrain terrain;
     Robot robot;
     Lidar lidar;
-    Target target;
+    Pose target;
 
     StateEstimator state_estimator;
     Controller controller;
@@ -39,8 +39,7 @@ struct State: public Step<State> {
 
         lidar.setScanSize(100);
 
-        Target target;
-        target.pose.position() = Eigen::Vector2d(0, 0);
+        target.position() = Eigen::Vector2d(0, 0);
 
         addStep(&State::step_motion);
         addStep(&State::step_lidar);
@@ -70,17 +69,20 @@ struct State: public Step<State> {
 
     bool step_state_estimator()
     {
-        state_estimator.start(controller.command, &lidar.landmarks, &terrain, dt);
-        state_estimator.step();
-        state_estimator.step();
-        return true;
+        if (!state_estimator.started()) {
+            state_estimator.start(
+                controller.command, &lidar.landmarks, &terrain, dt
+            );
+        }
+        return state_estimator.step();
     }
 
     bool step_controller()
     {
-        controller.start(robot.pose, target.pose, dt);
-        controller.step();
-        return true;
+        if (!controller.started()) {
+            controller.start(robot.pose, target, dt);
+        }
+        return controller.step();
     }
 };
 

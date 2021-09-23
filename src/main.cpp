@@ -49,8 +49,8 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
                     sf::Vector2f mapped_pos = window.mapPixelToCoords(mouse_pos);
-                    state.target.pose.position().x() = mapped_pos.x;
-                    state.target.pose.position().y() = mapped_pos.y;
+                    state.target.position().x() = mapped_pos.x;
+                    state.target.position().y() = mapped_pos.y;
                 }
             }
         }
@@ -65,3 +65,4 @@ int main()
 
     return 0;
 }
+

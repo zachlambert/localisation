@@ -1,30 +1,29 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#include <iostream>
 #include <Eigen/Core>
-#include <SFML/Graphics.hpp>
 
 #include "geometry.h"
+#include "step.h"
 
 
-class Controller: public sf::Drawable {
+class Controller: public Step<Controller> {
 public:
-    Controller() {}
+    Controller()
+    {
+        addStep(&Controller::step);
+    }
 
     void start(const Pose& pose, const Pose& target, double dt)
     {
         this->pose = pose;
         this->target = target;
         this->dt = dt;
+        Step::start();
     }
 
     bool step()
     {
-        std::cout << "Controller: Step 0" << std::endl;
-        // Control as if you know the current pose and target exactly.
-        // This is just to get the robot moving.
-
         Eigen::Vector2d disp = target.position() - pose.position();
         disp = pose.rotation().transpose() * disp;
         double e_theta = std::atan2(disp.y(), disp.x());
@@ -50,11 +49,6 @@ public:
     Velocity command;
 
 protected:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const
-    {
-        // Nothing
-    }
-
     double dt;
 
     // Inputs
