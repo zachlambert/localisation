@@ -18,7 +18,7 @@
 #include "point_cloud.h"
 
 
-class Terrain: public sf::Drawable {
+class Terrain {
 public:
     struct Element {
         Eigen::Vector2d pos;
@@ -29,29 +29,12 @@ public:
         }
     };
 
-    Terrain();
-    void addElement(const Element &element, bool add_landmarks=true);
-
-    void setTerrainColor(sf::Color color);
-    void setLandmarkColor(sf::Color color);
-    void setLandmarkSize(double size);
-
-    double queryIntersection(const Pose& pose, double angle)const;
-    void getObservableLandmarks(const Pose& pose, PointCloud& landmarks)const;
-
-    void updateVertices();
-
-private:
-    virtual void draw(sf::RenderTarget& target, sf::RenderStates states)const;
-
-    // Render information
-    sf::Color terrain_color;
-    sf::Color landmark_color;
-    double landmark_size;
-    sf::VertexArray vertex_array;
-
     std::vector<Element> elements;
     PointCloud landmarks;
+
+    void addElementLandmarks(const Element& element);
+    double queryIntersection(const Pose& pose, double angle)const;
+    void getObservableLandmarks(const Pose& pose, PointCloud& landmarks)const;
 };
 
 

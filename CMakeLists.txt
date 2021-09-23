@@ -20,6 +20,7 @@ set(SRC
     src/robot.cpp
     src/sensor.cpp
     src/terrain.cpp
+    src/renderer.cpp
 )
 
 add_executable(localisation ${SRC})

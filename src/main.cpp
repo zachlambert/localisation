@@ -1,22 +1,17 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "sim.h"
-
-struct Camera {
-    Eigen::Vector2d position;
-    double scale;
-    Camera():
-        position(0, 0),
-        scale(80)
-    {}
-};
+#include "state.h"
+#include "renderer.h"
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1200, 800), "Localistaion");
+    // Setup models
+
+    State state;
     Camera camera;
-    Sim sim;
+    sf::RenderWindow window(sf::VideoMode(1200, 800), "Localisation");
+    Renderer renderer(state, camera, window);
 
     bool running = false;
     sf::Clock clock;
@@ -35,17 +30,17 @@ int main()
             if (event.type == sf::Event::KeyReleased) {
                 if (event.key.code == sf::Keyboard::Q) {
                     if (!running) {
-                        sim.stepAll();
+                        state.stepRemaining();
                     }
                     running = true;
                 }
                 if (event.key.code == sf::Keyboard::W) {
                     if (running) {
                         running = false;
-                        sim.start(fixed_dt);
+                        state.start(fixed_dt);
                     } else {
-                        if (sim.step()) {
-                            sim.start(fixed_dt);
+                        if (state.step()) {
+                            state.start(fixed_dt);
                         }
                     }
                 }
@@ -54,28 +49,18 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
                     sf::Vector2f mapped_pos = window.mapPixelToCoords(mouse_pos);
-                    sim.target.pose.position().x() = mapped_pos.x;
-                    sim.target.pose.position().y() = mapped_pos.y;
+                    state.target.pose.position().x() = mapped_pos.x;
+                    state.target.pose.position().y() = mapped_pos.y;
                 }
             }
         }
 
         if (running) {
-            sim.start(dt);
-            sim.stepAll();
+            state.start(dt);
+            state.stepRemaining();
         }
 
-        window.clear(sf::Color::White);
-
-        sf::View view;
-        view.setCenter(camera.position.x(), camera.position.y());
-        view.setSize((double)window.getSize().x, -(double)window.getSize().y); // Flip y axis
-        view.zoom(1.0/camera.scale);
-        window.setView(view);
-
-        window.draw(sim);
-
-        window.display();
+        renderer.render();
     }
 
     return 0;

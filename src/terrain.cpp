@@ -8,15 +8,6 @@
 
 // ====== Terrain =====
 
-Terrain::Terrain()
-{
-    vertex_array.setPrimitiveType(sf::Triangles);
-    setTerrainColor(sf::Color(150, 150, 150));
-
-    landmarks.setMarkerColor(sf::Color(220, 100, 220));
-    landmarks.setMarkerSize(0.2);
-    landmarks.setMarkerType(MarkerType::SQUARE);
-}
 
 Eigen::VectorXd randomLandmarkDescriptor()
 {
@@ -30,31 +21,14 @@ Eigen::VectorXd randomLandmarkDescriptor()
     return v;
 }
 
-void Terrain::addElement(const Element& element, bool add_landmarks)
+void Terrain::addElementLandmarks(const Element& element)
 {
-    elements.push_back(element);
-
-    if (!add_landmarks) return;
     for (const auto& vertex: element.vertices) {
         landmarks.points.push_back(Point(element.pos + vertex));
         landmarks.descriptors.push_back(randomLandmarkDescriptor());
     }
 }
 
-void Terrain::setTerrainColor(sf::Color terrain_color)
-{
-    this->terrain_color = terrain_color;
-}
-
-void Terrain::setLandmarkColor(sf::Color landmark_color)
-{
-    this->landmark_color = landmark_color;
-}
-
-void Terrain::setLandmarkSize(double landmark_size)
-{
-    this->landmark_size = landmark_size;
-}
 
 
 // Functions used in query_intersection
@@ -135,27 +109,6 @@ void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out
 }
 
 
-void Terrain::updateVertices()
-{
-    vertex_array.clear();
-    for (const auto& element: elements) {
-        addMesh(
-            vertex_array,
-            element.pos,
-            element.vertices,
-            terrain_color
-        );
-    }
-    landmarks.updateVertices();
-}
-
-void Terrain::draw(sf::RenderTarget& target, sf::RenderStates states)const
-{
-    target.draw(vertex_array, states);
-    target.draw(landmarks, states);
-}
-
-
 // ===== Other functions =====
 
 void createTerrain(Terrain& terrain)
@@ -174,7 +127,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x2, -y2);
         element.addVertex(-x2, y2);
         element.addVertex(-x1, y2);
-        terrain.addElement(element, false);
+        terrain.elements.push_back(element);
     }
     {
         Terrain::Element element;
@@ -182,7 +135,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x2, y2);
         element.addVertex(x2, y2);
         element.addVertex(x2, y1);
-        terrain.addElement(element, false);
+        terrain.elements.push_back(element);
     }
     {
         Terrain::Element element;
@@ -190,7 +143,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x1, y2);
         element.addVertex(x2, y2);
         element.addVertex(x2, -y2);
-        terrain.addElement(element, false);
+        terrain.elements.push_back(element);
     }
     {
         Terrain::Element element;
@@ -198,7 +151,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x2, -y1);
         element.addVertex(x2, -y2);
         element.addVertex(-x2, -y2);
-        terrain.addElement(element, false);
+        terrain.elements.push_back(element);
     }
 
     // Add an arbitrary element within
@@ -210,7 +163,8 @@ void createTerrain(Terrain& terrain)
         element.addVertex(0, 1.2);
         element.addVertex(1.5, 0.8);
         element.addVertex(1.1, -1.2);
-        terrain.addElement(element);
+        terrain.elements.push_back(element);
+        terrain.addElementLandmarks(element);
     }
 
     // Add detail to inner walls
@@ -221,7 +175,8 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x1+0.15, 0);
         element.addVertex(-x1+0.15, -0.5*y1);
         element.addVertex(-x1, -y1);
-        terrain.addElement(element);
+        terrain.elements.push_back(element);
+        terrain.addElementLandmarks(element);
     }
     { // Right
         Terrain::Element element;
@@ -230,7 +185,8 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x1-0.05, 0.1*y1);
         element.addVertex(x1-0.2, 0.7*y1);
         element.addVertex(x1, y1);
-        terrain.addElement(element);
+        terrain.elements.push_back(element);
+        terrain.addElementLandmarks(element);
     }
     { // Top
         Terrain::Element element;
@@ -239,7 +195,8 @@ void createTerrain(Terrain& terrain)
         element.addVertex(0.1*x1, y1-0.2);
         element.addVertex(-0.4*x1, y1-0.1);
         element.addVertex(-x1, y1);
-        terrain.addElement(element);
+        terrain.elements.push_back(element);
+        terrain.addElementLandmarks(element);
     }
     { // Bottom
         Terrain::Element element;
@@ -248,8 +205,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(0*x1, -y1+0.2);
         element.addVertex(0.5*x1, -y1+0.1);
         element.addVertex(x1, -y1);
-        terrain.addElement(element);
+        terrain.elements.push_back(element);
+        terrain.addElementLandmarks(element);
     }
-
-    terrain.updateVertices();
 }
