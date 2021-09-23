@@ -74,20 +74,42 @@ void drawPointCloud(
     const PointCloud& point_cloud,
     MarkerType marker_type,
     double size,
-    sf::Color color)
+    sf::Color color,
+    const Pose& pose = Pose())
 {
     sf::VertexArray vertex_array;
     vertex_array.setPrimitiveType(sf::Triangles);
     for (const auto& point: point_cloud.points) {
         addMarker(
             vertex_array,
-            transformPoint(point_cloud.true_pose, point.pos),
+            transformPoint(pose, point.pos),
             marker_type,
             color,
             size);
     }
     window.draw(vertex_array);
 }
+
+// Target
+void drawTarget(
+    sf::RenderWindow& window,
+    const Pose& pose,
+    double size,
+    sf::Color color)
+{
+    sf::VertexArray vertex_array;
+    vertex_array.setPrimitiveType(sf::Triangles);
+
+    addMarker(
+        vertex_array,
+        pose.position(),
+        MarkerType::CROSS,
+        color,
+        size);
+
+    window.draw(vertex_array);
+}
+
 
 void drawState(sf::RenderWindow& window, const State& state)
 {
@@ -113,6 +135,13 @@ void drawState(sf::RenderWindow& window, const State& state)
         0.2,
         sf::Color::Black);
 
+    // Target
+    drawTarget(
+        window,
+        state.target,
+        0.2,
+        sf::Color::Black);
+
     // Robot
     drawPose(
         window,
@@ -120,19 +149,30 @@ void drawState(sf::RenderWindow& window, const State& state)
         0.2,
         sf::Color::Red);
 
-    // Sensor information
+    // Sensor information in true frame
     drawPointCloud(
         window,
         state.lidar.scan,
         MarkerType::CIRCLE,
         0.05,
-        sf::Color::Blue);
+        sf::Color::Blue,
+        state.robot.pose);
     drawPointCloud(
         window,
         state.lidar.landmarks,
         MarkerType::RING,
         0.4,
-        sf::Color::Magenta);
+        sf::Color::Magenta,
+        state.robot.pose);
+
+    // Sensor information in state estimator frame
+    drawPointCloud(
+        window,
+        state.lidar.landmarks,
+        MarkerType::RING,
+        0.4,
+        sf::Color::Green,
+        state.state_estimator.pose);
 }
 
 void Renderer::render()

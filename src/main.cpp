@@ -6,8 +6,6 @@
 
 int main()
 {
-    // Setup models
-
     State state;
     Camera camera;
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localisation");

@@ -4,6 +4,7 @@
 #include "algorithm/controller.h"
 #include "algorithm/state_estimator.h"
 #include "maths/geometry.h"
+#include "maths/motion_model.h"
 #include "state/robot.h"
 #include "state/sensor.h"
 #include "state/terrain.h"
@@ -14,6 +15,8 @@ struct State: public Step<State> {
 
     double dt;
 
+    MotionModel motion_model;
+
     Terrain terrain;
     Robot robot;
     Lidar lidar;
@@ -22,8 +25,12 @@ struct State: public Step<State> {
     StateEstimator state_estimator;
     Controller controller;
 
-    State()
+    State():
+        robot(&motion_model),
+        state_estimator(&motion_model)
     {
+        motion_model.setTwistVarianceScaling(0.01, 0.01, 0.01);
+
         createTerrain(terrain);
 
         robot.pose.position() = Eigen::Vector2d(-3, 3);
@@ -36,7 +43,7 @@ struct State: public Step<State> {
 
         lidar.setScanSize(100);
 
-        target.position() = Eigen::Vector2d(0, 0);
+        target.position() = Eigen::Vector2d(2, 2);
 
         addStep(&State::step_motion);
         addStep(&State::step_lidar);
@@ -48,12 +55,13 @@ struct State: public Step<State> {
     {
         this->dt = dt;
         step_number = 0;
+        motion_model.setTimeStep(dt);
         Step::start();
     }
 
     bool step_motion()
     {
-        robot.stepModel(controller.command, dt);
+        robot.stepModel(controller.command);
         return true;
     }
 
@@ -77,7 +85,7 @@ struct State: public Step<State> {
     bool step_controller()
     {
         if (!controller.started()) {
-            controller.start(robot.pose, target, dt);
+            controller.start(state_estimator.pose, target, dt);
         }
         return controller.step();
     }

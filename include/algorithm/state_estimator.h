@@ -1,11 +1,11 @@
 #ifndef ALGORITHM_STATE_ESTIMATOR_H
 #define ALGORITHM_STATE_ESTIMATOR_H
 
-#include <iostream>
 #include <Eigen/Dense>
 #include <SFML/Graphics.hpp>
 
 #include "maths/geometry.h"
+#include "maths/motion_model.h"
 #include "maths/point_cloud.h"
 #include "state/terrain.h"
 #include "utils/step.h"
@@ -17,7 +17,8 @@ public:
     Pose pose;
     Eigen::Matrix3d covariance;
 
-    StateEstimator()
+    StateEstimator(const MotionModel* motion_model):
+        motion_model(motion_model)
     {
         addStep(&StateEstimator::predict);
         addStep(&StateEstimator::update);
@@ -35,9 +36,6 @@ public:
     bool predict()
     {
         Velocity twist = command*dt;
-        twist.linear().x() += 0.1*dt; // TODO sample noise properly
-        twist.linear().y() -= 0.2*dt;
-        twist.angular() += 0.1*dt;
         pose.setFromTransform(pose.transform() * twistToTransform(twist).transform());
         return true;
     }
@@ -48,6 +46,7 @@ public:
     }
 
 protected:
+    const MotionModel* motion_model;
 
     // Inputs
     Velocity command;

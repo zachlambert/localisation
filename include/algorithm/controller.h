@@ -11,7 +11,7 @@ class Controller: public Step<Controller> {
 public:
     Controller()
     {
-        addStep(&Controller::step);
+        addStep(&Controller::step_main);
     }
 
     void start(const Pose& pose, const Pose& target, double dt)
@@ -22,7 +22,7 @@ public:
         Step::start();
     }
 
-    bool step()
+    bool step_main()
     {
         Eigen::Vector2d disp = target.position() - pose.position();
         disp = pose.rotation().transpose() * disp;

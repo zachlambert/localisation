@@ -2,6 +2,7 @@
 #define ROBOT_H
 
 #include "maths/geometry.h"
+#include "maths/motion_model.h"
 
 
 class Robot {
@@ -9,12 +10,17 @@ public:
     Pose pose;
     Velocity vel;
 
-    void stepModel(const Velocity& u, double dt)
+    Robot(const MotionModel* motion_model):
+        motion_model(motion_model)
+    {}
+
+    void stepModel(const Velocity& u)
     {
-        vel = u;
-        Eigen::Isometry2d dT = twistToTransform(vel * dt).transform();
-        pose.setFromTransform(pose.transform() * dT);
+        pose = motion_model->sampleForward(pose, u);
     }
+
+private:
+    const MotionModel* motion_model;
 };
 
 #endif

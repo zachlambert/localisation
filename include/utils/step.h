@@ -12,7 +12,10 @@ class Step {
 
 public:
     // Returns true if this object has finished stepping
-    bool step()
+    // Want child classes to always call this step() function.
+    // Therefore, avoid child classes overriding step() with something else
+    // by making virtual and final.
+    virtual bool step()final
     {
         if (step_number >= steps.size()) return true;
 
