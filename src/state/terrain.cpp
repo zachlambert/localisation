@@ -1,9 +1,7 @@
-#include "terrain.h"
 
-#include <iostream>
+#include "state/terrain.h"
 #include <stack>
-
-#include "render_utils.h"
+#include "utils/render_utils.h"
 
 
 // ====== Terrain =====
@@ -89,7 +87,6 @@ void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out
 
     static constexpr double intersection_allowance = 0.1;
     for (size_t i = 0; i < landmarks.points.size(); i++) {
-        std::cout << "i" << std::endl;
 
         const Point& point = landmarks.points[i];
         const Eigen::VectorXd& descriptor = landmarks.descriptors[i];
@@ -101,8 +98,6 @@ void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out
 
         if (dist < intersect_dist + intersection_allowance) {
             landmarks_out.points.push_back(Point(dist, angle));
-            std::cout << landmarks_out.points.back().pos.x() << ", ";
-            std::cout << landmarks_out.points.back().pos.y() << std::endl;
             landmarks_out.descriptors.push_back(descriptor);
         }
     }

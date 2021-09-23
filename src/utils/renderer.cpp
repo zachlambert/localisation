@@ -1,6 +1,7 @@
 
-#include "renderer.h"
-#include "render_utils.h"
+#include "utils/renderer.h"
+#include "utils/render_utils.h"
+
 
 void drawPoseCovariance(
     sf::RenderWindow& window,

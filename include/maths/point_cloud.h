@@ -1,17 +1,12 @@
-#ifndef POINT_CLOUD_H
-#define POINT_CLOUD_H
+#ifndef MATHS_POINT_CLOUD_H
+#define MATHS_POINT_CLOUD_H
 
 #include <vector>
 #include <Eigen/Core>
-#include <SFML/Graphics.hpp>
 
-#include "geometry.h"
-#include "render_utils.h"
+#include "maths/geometry.h"
+#include "utils/render_utils.h"
 
-
-// For simplicity, having a single point type, which
-// has fields for all relevant information.
-// Descriptors are stored separately to the point cloud.
 
 struct Point {
     Eigen::Vector2d pos;

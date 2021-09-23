@@ -1,16 +1,13 @@
 #ifndef SIM_H
 #define SIM_H
 
-#include <iostream>
-
-#include "geometry.h"
-#include "robot.h"
-#include "sensor.h"
-#include "terrain.h"
-#include "state_estimator.h"
-#include "controller.h"
-
-#include "step.h"
+#include "algorithm/controller.h"
+#include "algorithm/state_estimator.h"
+#include "maths/geometry.h"
+#include "state/robot.h"
+#include "state/sensor.h"
+#include "state/terrain.h"
+#include "utils/step.h"
 
 
 struct State: public Step<State> {

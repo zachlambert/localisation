@@ -1,5 +1,5 @@
 
-#include "geometry.h"
+#include "maths/geometry.h"
 
 
 // S is the matrix used to apply the cross product

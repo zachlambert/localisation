@@ -1,10 +1,8 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
-#include <iostream>
+#include "maths/geometry.h"
 
-#include <SFML/Graphics.hpp>
-#include "geometry.h"
 
 class Robot {
 public:

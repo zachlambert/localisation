@@ -3,11 +3,10 @@
 
 #include <vector>
 #include <Eigen/Core>
-#include <SFML/Graphics.hpp>
 
-#include "geometry.h"
-#include "terrain.h"
-#include "point_cloud.h"
+#include "maths/geometry.h"
+#include "maths/point_cloud.h"
+#include "state/terrain.h"
 
 
 class Lidar {
@@ -35,8 +34,6 @@ public:
     {
         terrain.getObservableLandmarks(pose, landmarks);
     }
-
 };
-
 
 #endif

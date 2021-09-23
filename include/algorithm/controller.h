@@ -1,10 +1,10 @@
-#ifndef CONTROLLER_H
-#define CONTROLLER_H
+#ifndef ALGORITHM_CONTROLLER_H
+#define ALGORITHM_CONTROLLER_H
 
 #include <Eigen/Core>
 
-#include "geometry.h"
-#include "step.h"
+#include "maths/geometry.h"
+#include "utils/step.h"
 
 
 class Controller: public Step<Controller> {

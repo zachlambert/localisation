@@ -1,11 +1,11 @@
-#ifndef MODELS_H
-#define MODELS_H
+#ifndef MATHS_MODELS_H
+#define MATHS_MODELS_H
 
 #include <random>
 
-#include "geometry.h"
-#include "point_cloud.h"
-#include "terrain.h"
+#include "maths/geometry.h"
+#include "maths/point_cloud.h"
+#include "state/terrain.h"
 
 
 struct StateSpace

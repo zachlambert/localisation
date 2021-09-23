@@ -1,14 +1,15 @@
-#ifndef STATE_ESTIMATOR_H
-#define STATE_ESTIMATOR_H
+#ifndef ALGORITHM_STATE_ESTIMATOR_H
+#define ALGORITHM_STATE_ESTIMATOR_H
 
 #include <iostream>
 #include <Eigen/Dense>
 #include <SFML/Graphics.hpp>
 
-#include "geometry.h"
-#include "point_cloud.h"
-#include "terrain.h"
-#include "step.h"
+#include "maths/geometry.h"
+#include "maths/point_cloud.h"
+#include "state/terrain.h"
+#include "utils/step.h"
+
 
 class StateEstimator: public Step<StateEstimator> {
 public:

@@ -1,8 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "state.h"
-#include <SFML/Graphics.hpp>
+#include "state/state.h"
+
 
 struct Camera {
     Eigen::Vector2d position;

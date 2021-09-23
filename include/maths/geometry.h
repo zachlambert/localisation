@@ -1,5 +1,5 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef MATHS_GEOMETRY_H
+#define MATHS_GEOMETRY_H
 
 #include <cmath>
 #include <Eigen/Core>

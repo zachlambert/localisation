@@ -1,8 +1,8 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 
-#include "state.h"
-#include "renderer.h"
+#include "state/state.h"
+#include "utils/renderer.h"
 
 int main()
 {

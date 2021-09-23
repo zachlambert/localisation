@@ -4,7 +4,7 @@
 #include <Eigen/Core>
 #include <SFML/Graphics.hpp>
 
-#include "geometry.h"
+#include "maths/geometry.h"
 
 
 sf::Transform getRenderTransform(const Eigen::Vector2d& pos);
