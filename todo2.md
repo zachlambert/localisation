@@ -1,14 +1,32 @@
 
+# Odometry
+
+[ ] Replace velocity motion model with just: motion model. All this does
+    is take an odometry input (which also includes variance) and propagates
+    the pose based on this.
+[ ] Create an odometry data structure, that is a pose + variance, which is
+    passed to the motion model.
+[ ] Add a general "odometry sensor" to the Robot. This acts to represent the
+    odometry estimate returned by the mobile robot base. On a real robot, this
+    would be calculated by integrating encoder positions, possibly fused
+    with data from an IMU (for orientation change) and GPS (for displacement).
+    In simulation, just add a random error to the odometry to avoid the
+    complexity of actually modelling how we calculate the odometry.
+[ ] Add a placeholder for a visual odometry stage, which takes the odometry
+    from the mobile robot as initialisation then optimises by aligning
+    features or raw data between scans. (In 2D, will be ICP, but use
+    visual odometry as a generic term).
+    Visual odometry also needs a variance, which is found based on the
+    sensor model (and/or feature model).
+    Visual odometry may be fused with the initial odometry, which allows
+    it to discount visual odometry when matching was poor, but override the
+    base odometry when matching was particularly good.
+
 # Ekf with landmarks and known map
 
-[ ] Have the state estimator update pose covariance using the linearised
-    model provided by the motion model.
-    (And decide which frame to define variance in)
 [ ] Render point descriptors by drawing an array of lines surrounding
-    the point, where each line encodes 2 dimensions.
-    In the case of an odd number of dimensions, set as horizontal line (y=0).
-    With this, can tell that descriptors match if all the lines drawn around
-    it align.
+    the point, where the angle of each line encodes a dimension.
+    (will be normalised from 0->1, so map this to -pi->pi)
     (Use different colours or each line to provide some distinction between
      them).
 [ ] Define a feature extraction model.
@@ -48,4 +66,3 @@
 
 # Particle filter with raw data and unknown map
 
-...
