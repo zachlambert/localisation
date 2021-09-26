@@ -3,45 +3,82 @@
 
 #include <random>
 
-#include "maths/geometry.h"
-#include "maths/point_cloud.h"
-#include "state/terrain.h"
+#include "maths/odometry.h"
 
 
 class MotionModel
 {
 public:
-    void setTimeStep(double dt) { this->dt = dt; }
-    void setTwistVarianceScaling(double vx, double vy, double vtheta) {
-        this->vx = vx;
-        this->vy = vy;
-        this->vtheta = vtheta;
+    void setKidnapProbability(double epsilon) { this->epsilon = epsilon; }
+
+    void predictGaussian(StateEstimateGaussian& x, const StateEstimateGaussian& x_prev, const Odometry& u)const
+    {
+        // Note: Allow the same x to be provided as x and x_prev.
+
+        StateEstimateGaussian delta_x = u.getGaussian();
+
+        Eigen::Matrix3d A, B;
+        A.setIdentity();
+        A.block<2,1>(0,2) = x_prev.pose.rotation() * (-1)*crossProductMatrix(delta_x.pose.position());
+        B.setIdentity();
+        B.block<2,2>(0,0) = x_prev.pose.rotation();
+
+        x.pose.setFromTransform(x_prev.pose.transform() * delta_x.pose.transform());
+        x.covariance = A*x_prev.covariance*A.transpose() + B*delta_x.covariance*B.transpose();
     }
 
-    // p(x_k | x_{k-1}, u_k)
-    double evaluateForward(const Pose& x, const Pose &x_prev, const Velocity& u)const;
-    Pose sampleForward(const Pose& x_prev, const Velocity& u)const;
-
-    // p(u_k | x_{k-1}, x_k)
-    double evaluateInverse(const Velocity& u, const Pose& x_prev, const Pose& x)const;
-    Velocity sampleInverse(const Pose& x_prev, const Pose& x)const;
-
-    // dx = Adx_prev + Bdu + w
-    struct LinearModel
+    void predictParticleFilter(StateEstimateParticles& x, const StateEstimateParticles& x_prev, const Odometry& u)const
     {
-        Pose x0;
-        Eigen::Matrix3d A;
-        Eigen::Matrix3d B;
-        Eigen::Matrix3d Q;
-        LinearModel(){ A.setZero(); B.setZero(); Q.setZero(); }
-    };
-    LinearModel getLinearModel(const Pose& x0_prev, const Velocity& u0)const;
+        // Note: Allow the same x to be provided as x and x_prev.
+
+        x.particles.resize(x_prev.particles.size());
+        for (size_t i = 0; i < x_prev.particles.size(); i++) {
+            if (sampleKidnap()) {
+                x.particles[i].pose = sampleKidnappedGaussian(x_prev.particles[i].pose);
+            } else {
+                // TODO: Since we are sampling from the true p(delta_x) the
+                // incremental weight is 1. ie: Don't need to change weight.
+                // May want to allow sampling from a general q(delta_x), for which we need
+                // to be able to evaluate p(delta_x) from odometry.
+                Pose delta_x = u.sample();
+                x.particles[i].pose.setFromTransform(x_prev.particles[i].pose.transform() * delta_x.transform());
+                x.particles[i].weight = x_prev.particles[i].weight;
+            }
+        }
+    }
+
+    void predictGaussianMixture(StateEstimateGaussianMixture& x, const StateEstimateGaussianMixture& x_prev, const Odometry& u)const
+    {
+        // TODO: Check this is correct
+        x.components.resize(x_prev.components.size());
+        for (std::size_t i = 0; i < x_prev.components.size(); i++) {
+            x.components[i].weight = x_prev.components[i].weight;
+            if (sampleKidnap()) {
+                x.components[i].gaussian = sampleKidnappedGaussian(x_prev.components[i].gaussian.pose);
+            } else {
+
+            }
+        }
+    }
 
 private:
-    Eigen::Matrix3d twistCovariance(const Velocity& mean_twist)const;
+    bool sampleKidnap()const {
+        return sampleUniform(0, 1) > epsilon ? false : true;
+    }
+    Pose sampleKidnappedPose(const Pose& initial)const
+    {
+        Pose pose;
+        // TODO: Do something here. Either sample somewhere near the initial position
+        // or take the map as an extra input and use this somehow.
+        return pose;
+    }
+    Eigen::Matrix3d getKidnappedCovariance()const
+    {
+        Eigen::Matrix3d covariance;
+        return covariance;
+    }
 
-    double dt;
-    double vx, vy, vtheta;
+    double epsilon;
 };
 
 #endif

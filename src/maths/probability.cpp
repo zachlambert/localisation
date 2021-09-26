@@ -36,3 +36,22 @@ Eigen::VectorXd sampleGaussian(const Eigen::VectorXd& mean, const Eigen::MatrixX
 
     return mean + C*x;
 }
+
+double evaluateGaussian(double x, double mean, double var)
+{
+    return std::exp(-0.5*std::pow(x - mean, 2) / var) / std::sqrt(2*M_PI*var);
+}
+
+double sampleGaussian(double mean, double var)
+{
+    std::default_random_engine generator;
+    std::normal_distribution<double> gaussian(mean, std::sqrt(var));
+    return gaussian(generator);
+}
+
+double sampleUniform(double a, double b)
+{
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> distribution(a, b);
+    return distribution(generator);
+}
