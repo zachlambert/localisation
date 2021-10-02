@@ -8,8 +8,8 @@ void drawPoseCovariance(
     const Pose& pose,
     const Eigen::Matrix3d& cov)
 {
-    const double cov_position_scaling = 40;
-    const double cov_orientation_scaling = 10;
+    const double std_position_scaling = 3;
+    const double std_orientation_scaling = 3;
 
     sf::VertexArray vertex_array;
     vertex_array.setPrimitiveType(sf::Triangles);
@@ -17,16 +17,18 @@ void drawPoseCovariance(
     addCovarianceEllipse(
         vertex_array,
         cov.block<2,2>(0,0),
-        cov_position_scaling,
+        std_position_scaling,
         sf::Color::Green);
     addSegment(
         vertex_array,
         0.5,
-        0,
-        cov_orientation_scaling * cov(2,2),
+        pose.orientation(),
+        std_orientation_scaling * std::sqrt(cov(2,2)),
         sf::Color::Cyan);
 
-    window.draw(vertex_array, getRenderTransform(pose));
+    sf::Transform transform;
+    transform.translate(pose.position().x(), pose.position().y());
+    window.draw(vertex_array, transform);
 }
 
 void drawPose(
@@ -131,7 +133,7 @@ void drawStateEstimator(
 {
     const StateEstimatorEKF* ekf = dynamic_cast<const StateEstimatorEKF*>(&state_estimator);
     if (ekf) {
-        // drawStateEstimatorEKF(window, *ekf);
+        drawStateEstimatorEKF(window, *ekf);
         return;
     }
 

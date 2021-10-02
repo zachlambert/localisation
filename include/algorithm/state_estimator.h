@@ -28,6 +28,8 @@ public:
     // using a parameterisation (eg: particles).
     virtual Pose getStateEstimate()const = 0;
 
+    virtual void resetEstimate(const Pose& pose) = 0;
+
     // Provide the data for a new predict and update step.
     // Needs the following information in general.
     // - Control data (odometry)
@@ -67,6 +69,12 @@ public:
     virtual Pose getStateEstimate()const
     {
         return x.pose;
+    }
+
+    virtual void resetEstimate(const Pose& pose)
+    {
+        x.pose = pose;
+        x.covariance.setZero();
     }
 
 protected:

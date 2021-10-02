@@ -358,7 +358,7 @@ void addEllipse(
 void addCovarianceEllipse(
     sf::VertexArray& vertex_array,
     const Eigen::Matrix2d& cov,
-    double scaling,
+    double std_scaling,
     sf::Color color)
 {
 
@@ -368,8 +368,8 @@ void addCovarianceEllipse(
     double v1 = eigensolver.eigenvalues()(0).real();
     double v2 = eigensolver.eigenvalues()(1).real();
     double angle = std::atan2(u1.y(), u1.x());
-    double width = v1 * scaling;
-    double height = v2 * scaling;
+    double width = std::sqrt(v1) * std_scaling;
+    double height = std::sqrt(v2) * std_scaling;
     addEllipse(vertex_array, width, height, angle, color);
 }
 

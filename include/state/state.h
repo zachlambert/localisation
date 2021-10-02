@@ -38,14 +38,15 @@ struct State: public Step<State> {
         robot.pose.position() = Eigen::Vector2d(-3, 3);
         robot.pose.orientation() = 0.5;
 
+        state_estimator.resetEstimate(robot.pose);
+
         lidar.setScanSize(100);
 
         target.position() = Eigen::Vector2d(2, 2);
 
-        addStep(&State::step_motion);
-        addStep(&State::step_lidar);
-        addStep(&State::step_state_estimator);
-        addStep(&State::step_controller);
+        addStep(&State::stepModel);
+        addStep(&State::stepStateEstimator);
+        addStep(&State::stepController);
     }
 
     void start(double dt)
@@ -55,20 +56,15 @@ struct State: public Step<State> {
         Step::start();
     }
 
-    bool step_motion()
+    bool stepModel()
     {
         robot.stepModel(controller.command, dt);
-        return true;
-    }
-
-    bool step_lidar()
-    {
         lidar.sample(robot.pose, terrain);
         lidar.sampleLandmarks(robot.pose, terrain);
         return true;
     }
 
-    bool step_state_estimator()
+    bool stepStateEstimator()
     {
         if (!state_estimator.started()) {
             state_estimator.start(
@@ -80,7 +76,7 @@ struct State: public Step<State> {
         return state_estimator.step();
     }
 
-    bool step_controller()
+    bool stepController()
     {
         if (!controller.started()) {
             controller.start(robot.pose, target, dt);
