@@ -21,8 +21,9 @@ void drawPoseCovariance(
         sf::Color::Green);
     addSegment(
         vertex_array,
-        0.5,
+        Eigen::Vector2d(0, 0),
         pose.orientation(),
+        0.5,
         std_orientation_scaling * std::sqrt(cov(2,2)),
         sf::Color::Cyan);
 
@@ -89,6 +90,31 @@ void drawPointCloud(
             color,
             size);
     }
+
+    // Also add descriptors. If not used, size = 0
+    double descriptor_scaling = 0.8;
+    for (size_t i = 0; i < point_cloud.descriptors.size(); i++) {
+        double inner_radius = size*0.5;
+        double segment_width = 2*M_PI / point_cloud.descriptors[i].size();
+
+        for (size_t j = 0; j < point_cloud.descriptors[i].size(); j++) {
+            double angle = j * segment_width;
+            double outer_radius = inner_radius + descriptor_scaling * point_cloud.descriptors[i](j);
+
+            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos);
+
+            Eigen::Vector2d dir = getDirection(angle);
+            addSegmentSlice(
+                vertex_array,
+                position,
+                angle,
+                inner_radius,
+                outer_radius,
+                segment_width * 0.5,
+                color);
+        }
+    }
+
     window.draw(vertex_array);
 }
 

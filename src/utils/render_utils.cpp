@@ -375,8 +375,9 @@ void addCovarianceEllipse(
 
 void addSegment(
     sf::VertexArray& vertex_array,
-    double radius,
+    const Eigen::Vector2d& position,
     double orientation,
+    double radius,
     double width,
     sf::Color color)
 {
@@ -385,9 +386,31 @@ void addSegment(
     double angle = orientation - width/2;
     for (size_t i = 0; i < n; i++) {
         addTriangle(vertex_array, color,
-            Eigen::Vector2d(0, 0),
-            radius * getDirection(angle),
-            radius * getDirection(angle+delta_angle));
+            position,
+            position + radius * getDirection(angle),
+            position + radius * getDirection(angle+delta_angle));
+        angle += delta_angle;
+    }
+}
+
+void addSegmentSlice(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& position,
+    double orientation,
+    double inner_radius,
+    double outer_radius,
+    double width,
+    sf::Color color)
+{
+    constexpr size_t n = 16;
+    const double delta_angle = width / n;
+    double angle = orientation - width/2;
+    for (size_t i = 0; i < n; i++) {
+        addQuad(vertex_array, color,
+            position + inner_radius * getDirection(angle),
+            position + outer_radius * getDirection(angle),
+            position + outer_radius * getDirection(angle+delta_angle),
+            position + inner_radius * getDirection(angle+delta_angle));
         angle += delta_angle;
     }
 }

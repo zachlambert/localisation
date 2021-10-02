@@ -9,12 +9,13 @@
 
 Eigen::VectorXd randomLandmarkDescriptor()
 {
-    double u1 = 2*((double)rand() / RAND_MAX) - 1;
-    double u2 = 2*((double)rand() / RAND_MAX) - 1;
+    const size_t N = 8;
+
     Eigen::VectorXd v;
-    v.resize(2);
-    v(0) = u1;
-    v(1) = u2;
+    v.resize(N);
+    for (size_t i = 0; i < N; i++) {
+        v(i) = (double)rand() / RAND_MAX;
+    }
     v.normalize();
     return v;
 }

@@ -58,8 +58,18 @@ void addCovarianceEllipse(
 
 void addSegment(
     sf::VertexArray& vertex_array,
-    double radius,
+    const Eigen::Vector2d& position,
     double orientation,
+    double radius,
+    double width,
+    sf::Color color);
+
+void addSegmentSlice(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& position,
+    double orientation,
+    double radius,
+    double length,
     double width,
     sf::Color color);
 
