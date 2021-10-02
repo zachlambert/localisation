@@ -50,6 +50,7 @@ public:
             double phi2_d;
             double phi2_phi2;
         } var_weights;
+        Config(): var_weights( {0, 0, 0, 0, 0, 0} ) {}
     };
     void setConfig(const Config& config) { this->config = config; }
 

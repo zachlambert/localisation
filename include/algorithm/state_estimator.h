@@ -11,16 +11,16 @@
 #include "utils/step.h"
 
 
-class StateEstimatorEKF: public Step<StateEstimatorEKF> {
+class StateEstimator: public Step<StateEstimator> {
 public:
-    StateEstimatorEKF(
+    StateEstimator(
             const MotionModel& motion_model):
             // const MeasurementModel& measurement_model): TODO
         motion_model(motion_model)
         // measurement_model(measurement_model) TODO
     {
-        addStep(&StateEstimatorEKF::predict);
-        addStep(&StateEstimatorEKF::update);
+        addStep(&StateEstimator::predict);
+        addStep(&StateEstimator::update);
     }
 
     // General function for getting a state estimate.
@@ -33,41 +33,55 @@ public:
     // - Control data (odometry)
     // - Observations (scan)
     // - Known map (terrain) [May or may not be used]
-    void start(const Odometry* odometry, const PointCloud* scan, const Terrain* terrain, double dt)
+    void start(Velocity* twistEstimate, const PointCloud* scan, const Terrain* terrain)
     {
-        this->odometry = odometry;
+        this->twistEstimate = twistEstimate;
         this->scan = scan;
         this->terrain = terrain;
-        this->dt = dt;
         Step::start();
     }
 
-private:
-    bool predict()
-    {
-        state_estimate = motion_model.getGaussian(state_estimate, *odometry);
-        return true;
-    }
-
-    bool update()
-    {
-        // TODO
-        return true;
-    }
+protected:
+    virtual bool predict() = 0;
+    virtual bool update() = 0;
 
     // Models
     const MotionModel& motion_model;
     // const MeasurementModel& measurement_model TODO
 
     // Inputs
-    const Odometry* odometry = nullptr;
+    const Velocity* twistEstimate;
     const PointCloud* scan = nullptr;
     const Terrain* terrain = nullptr;
-    double dt;
-
-    // State estimate
-    StateEstimateGaussian state_estimate;
 };
 
+
+class StateEstimatorEKF: public StateEstimator {
+public:
+    StateEstimatorEKF(const MotionModel& motion_model):
+        StateEstimator(motion_model)
+    {}
+
+    virtual Pose getStateEstimate()const
+    {
+        return x.pose;
+    }
+
+protected:
+    virtual bool predict()
+    {
+        x = motion_model.getGaussian(x, *twistEstimate);
+        return true;
+    }
+
+    virtual bool update()
+    {
+        // TODO
+        return true;
+    }
+
+private:
+    StateEstimateGaussian x;
+};
 
 #endif

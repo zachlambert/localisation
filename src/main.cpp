@@ -6,7 +6,22 @@
 
 int main()
 {
-    State state;
+    // Configure models and the state estimator
+    MotionModel motion_model;
+    {
+        MotionModel::Config config;
+        config.var_weights.d_d = 0.1;
+        config.var_weights.phi1_phi1 = 0.1;
+        config.var_weights.phi2_phi2 = 0.1;
+        motion_model.setConfig(config);
+    }
+
+    StateEstimatorEKF state_estimator(motion_model);
+
+    Controller controller;
+
+    State state(motion_model, state_estimator, controller);
+
     Camera camera;
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localisation");
     Renderer renderer(state, camera, window);

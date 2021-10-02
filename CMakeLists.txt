@@ -16,7 +16,6 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 set(SRC
     src/main.cpp
     src/maths/geometry.cpp
-    src/maths/motion_model.cpp
     src/maths/probability.cpp
     src/state/terrain.cpp
     src/utils/render_utils.cpp

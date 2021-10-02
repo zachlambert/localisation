@@ -20,25 +20,21 @@ struct State: public Step<State> {
     Lidar lidar;
     Pose target;
 
-    StateEstimatorEKF state_estimator;
-    Controller controller;
+    StateEstimator& state_estimator;
+    Controller& controller;
 
-    State(
-            const MotionModel& motion_model):
-        robot(&motion_model),
-        state_estimator(&motion_model)
+    State(  const MotionModel& motion_model,
+            StateEstimator& state_estimator,
+            Controller& controller):
+        robot(motion_model),
+        // TODO: lidar(measurement_model)
+        state_estimator(state_estimator),
+        controller(controller)
     {
-        motion_model.setTwistVarianceScaling(0.01, 0.01, 0.01);
-
         createTerrain(terrain);
 
         robot.pose.position() = Eigen::Vector2d(-3, 3);
         robot.pose.orientation() = 0.5;
-        robot.vel.linear() = Eigen::Vector2d(1, 0.2);
-        robot.vel.angular() = 1;
-
-        state_estimator.pose = robot.pose;
-        state_estimator.covariance = Eigen::Vector3d(0.01, 0.01, 0.1).asDiagonal();
 
         lidar.setScanSize(100);
 
@@ -54,13 +50,12 @@ struct State: public Step<State> {
     {
         this->dt = dt;
         step_number = 0;
-        motion_model.setTimeStep(dt);
         Step::start();
     }
 
     bool step_motion()
     {
-        robot.stepModel(controller.command);
+        robot.stepModel(controller.command, dt);
         return true;
     }
 
@@ -75,7 +70,9 @@ struct State: public Step<State> {
     {
         if (!state_estimator.started()) {
             state_estimator.start(
-                controller.command, &lidar.landmarks, &terrain, dt
+                &robot.twistEstimate,
+                &lidar.landmarks,
+                &terrain
             );
         }
         return state_estimator.step();
@@ -84,7 +81,7 @@ struct State: public Step<State> {
     bool step_controller()
     {
         if (!controller.started()) {
-            controller.start(state_estimator.pose, target, dt);
+            controller.start(state_estimator.getStateEstimate(), target, dt);
         }
         return controller.step();
     }
