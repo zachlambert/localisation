@@ -36,7 +36,7 @@ struct PointCloud {
     // May need additional information later
 };
 
-Eigen::VectorXd getPointInnovation(const Point& y, const Point& y_predicted)
+inline Eigen::VectorXd getPointInnovation(const Point& y, const Point& y_predicted)
 {
     Eigen::VectorXd dif = y.state() - y_predicted.state();
     normaliseAngle(dif(1));

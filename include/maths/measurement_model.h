@@ -27,7 +27,7 @@ public:
     };
     void setConfig(const Config& config) { this->config = config; }
 
-    double evaluateProbability(double range, double angle, const Pose& pose, const Terrain& terrain)
+    double evaluateProbability(double range, double angle, const Pose& pose, const Terrain& terrain)const
     {
         double range_hit = terrain.queryIntersection(pose, angle);
 
@@ -54,7 +54,7 @@ public:
         return (1 - prob_inf) * p_y;
     }
 
-    double sample(double angle, const Pose& pose, const Terrain& terrain)
+    double sample(double angle, const Pose& pose, const Terrain& terrain)const
     {
         double range_hit = terrain.queryIntersection(pose, angle);
 
@@ -81,7 +81,7 @@ public:
         double range;
         double variance;
     };
-    RangeEstimate getRangeEstimate(double angle, const Pose& pose, const Terrain& terrain)
+    RangeEstimate getRangeEstimate(double angle, const Pose& pose, const Terrain& terrain)const
     {
         RangeEstimate range_estimate;
         range_estimate.range = terrain.queryIntersection(pose, angle);
@@ -95,10 +95,6 @@ private:
 
 class FeatureModel {
 public:
-    FeatureModel(const RangeModel& range_model):
-        range_model(range_model)
-    {}
-
     struct Config {
         double range_var;
         double angle_var;
@@ -111,7 +107,7 @@ public:
 
     void setConfig(const Config& config) { this->config = config; }
 
-    void sampleFeatures(PointCloud& features, const Pose& pose, const Terrain& terrain)
+    void sample(PointCloud& features, const Pose& pose, const Terrain& terrain)const
     {
         terrain.getObservableLandmarks(pose, features);
 
@@ -150,7 +146,7 @@ public:
         }
     }
 
-    double evaluateProbabilitySingle(const Point& yi, const Point& yi_mean)
+    double evaluateProbabilitySingle(const Point& yi, const Point& yi_mean)const
     {
         double p = 1;
         p *= evaluateGaussian(yi.range, yi_mean.range, config.range_var);
@@ -163,7 +159,7 @@ public:
         return p;
     }
 
-    double evaluateProbability(PointCloud& y, const Pose& pose, const Terrain& terrain)
+    double evaluateProbability(PointCloud& y, const Pose& pose, const Terrain& terrain)const
     {
         PointCloud y_prior;
         terrain.getObservableLandmarks(pose, y_prior);
@@ -183,7 +179,7 @@ public:
         Eigen::MatrixXd C;
         Eigen::MatrixXd R;
     };
-    LinearModel linearise(const PointCloud& y, const Pose& pose, const Terrain& terrain)
+    LinearModel linearise(const PointCloud& y, const Pose& pose, const Terrain& terrain)const
     {
         PointCloud y_prior;
         terrain.getObservableLandmarks(pose, y_prior);
@@ -209,7 +205,7 @@ public:
 
             linear_model.C.block(0, i*stride, stride, 3).setZero();
             linear_model.C.block(0, i*stride, stride, 3).block(0, 0, 1, 2) = - n.transpose();
-            linear_model.C.block(0, i*stride, stride, 3).block(0, 1, 1, 2) = - crossProductMatrix(1) * n.transpose() / yi_prior.range;
+            linear_model.C.block(0, i*stride, stride, 3).block(0, 1, 1, 2) = - (crossProductMatrix(1) * n).transpose() / yi_prior.range;
             linear_model.C.block(0, i*stride, stride, 3)(1, 2) = -1;
 
             linear_model.R.block(i*stride, i*stride, stride, stride)(0,0) = 1;
@@ -225,7 +221,7 @@ public:
             index_prior(index_prior), index_new(index_new), p(p)
         {}
     };
-    void getCorrespondances(std::vector<Correspondance>& c, const PointCloud& y_new, const PointCloud& y_prior)
+    void getCorrespondances(std::vector<Correspondance>& c, const PointCloud& y_new, const PointCloud& y_prior)const
     {
         for (size_t i = 0; i < y_new.points.size(); i++) {
             double p_best = 0;
@@ -241,7 +237,6 @@ public:
 
 private:
     Config config;
-    const RangeModel& range_model;
 };
 
 #endif

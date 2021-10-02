@@ -85,7 +85,7 @@ void drawPointCloud(
     for (const auto& point: point_cloud.points) {
         addMarker(
             vertex_array,
-            transformPoint(pose, point.pos),
+            transformPoint(pose, point.pos()),
             marker_type,
             color,
             size);
@@ -93,15 +93,15 @@ void drawPointCloud(
 
     // Also add descriptors. If not used, size = 0
     double descriptor_scaling = 0.8;
-    for (size_t i = 0; i < point_cloud.descriptors.size(); i++) {
+    for (size_t i = 0; i < point_cloud.points.size(); i++) {
         double inner_radius = size*0.5;
-        double segment_width = 2*M_PI / point_cloud.descriptors[i].size();
+        double segment_width = 2*M_PI / point_cloud.points[i].descriptor.size();
 
-        for (size_t j = 0; j < point_cloud.descriptors[i].size(); j++) {
+        for (size_t j = 0; j < point_cloud.points[i].descriptor.size(); j++) {
             double angle = j * segment_width;
-            double outer_radius = inner_radius + descriptor_scaling * point_cloud.descriptors[i](j);
+            double outer_radius = inner_radius + descriptor_scaling * point_cloud.points[i].descriptor(j);
 
-            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos);
+            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos());
 
             Eigen::Vector2d dir = getDirection(angle);
             addSegmentSlice(
@@ -199,14 +199,14 @@ void drawState(sf::RenderWindow& window, const State& state)
     // Sensor information in true frame
     drawPointCloud(
         window,
-        state.lidar.scan,
+        state.lidar.ranges,
         MarkerType::CIRCLE,
         0.05,
         sf::Color::Blue,
         state.robot.pose);
     drawPointCloud(
         window,
-        state.lidar.landmarks,
+        state.lidar.features,
         MarkerType::RING,
         0.4,
         sf::Color::Magenta,
@@ -215,7 +215,7 @@ void drawState(sf::RenderWindow& window, const State& state)
     // Sensor information in state estimator frame
     drawPointCloud(
         window,
-        state.lidar.landmarks,
+        state.lidar.features,
         MarkerType::RING,
         0.4,
         sf::Color::Green,

@@ -16,11 +16,45 @@ int main()
         motion_model.setConfig(config);
     }
 
+    RangeModel range_model;
+    {
+        RangeModel::Config config;
+        config.max_range = 10;
+        config.hit_var = 0.1;
+        config.short_scale = 1;
+
+        config.prior_hit = 0.7;
+        config.prior_invalid = 0.1;
+        config.prior_random = 0.1;
+        config.prior_short = 0.1;
+
+        range_model.setConfig(config);
+    }
+
+    FeatureModel feature_model;
+    {
+        FeatureModel::Config config;
+        config.range_var = 0.1;
+        config.angle_var = 0.01;
+        config.descriptor_var = 0.1;
+
+        config.correspondance_p_threshold = 0; // TODO: Increase a bit
+        config.false_negative_p = 0.1;
+        config.false_positive_rate = 3;
+
+        feature_model.setConfig(config);
+    }
+
     StateEstimatorEKF state_estimator(motion_model);
 
     Controller controller;
 
-    State state(motion_model, state_estimator, controller);
+    State state(
+        motion_model,
+        range_model,
+        feature_model,
+        state_estimator,
+        controller);
 
     Camera camera;
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localisation");

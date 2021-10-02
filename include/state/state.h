@@ -26,10 +26,12 @@ struct State: public Step<State> {
     Controller& controller;
 
     State(  const MotionModel& motion_model,
+            const RangeModel& range_model,
+            const FeatureModel& feature_model,
             StateEstimator& state_estimator,
             Controller& controller):
         robot(motion_model),
-        // TODO: lidar(measurement_model)
+        lidar(range_model, feature_model),
         state_estimator(state_estimator),
         controller(controller)
     {
@@ -59,8 +61,8 @@ struct State: public Step<State> {
     bool stepModel()
     {
         robot.stepModel(controller.command, dt);
-        lidar.sample(robot.pose, terrain);
-        lidar.sampleLandmarks(robot.pose, terrain);
+        lidar.sampleRanges(robot.pose, terrain);
+        lidar.sampleFeatures(robot.pose, terrain);
         return true;
     }
 
@@ -69,7 +71,7 @@ struct State: public Step<State> {
         if (!state_estimator.started()) {
             state_estimator.start(
                 &robot.twistEstimate,
-                &lidar.landmarks,
+                &lidar.features,
                 &terrain
             );
         }

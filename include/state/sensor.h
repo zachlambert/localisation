@@ -7,36 +7,38 @@
 #include "maths/geometry.h"
 #include "maths/point_cloud.h"
 #include "state/terrain.h"
-
+#include "maths/measurement_model.h"
 
 class Lidar {
 public:
-    PointCloud scan;
-    PointCloud landmarks;
+    PointCloud ranges;
+    PointCloud features;
 
-    Lidar(const MeasurementModel& range_measurement_model
+    Lidar(const RangeModel& range_model, const FeatureModel& feature_model):
+        range_model(range_model), feature_model(feature_model)
+    {}
 
     void setScanSize(size_t num_points)
     {
-        scan.points.resize(num_points);
+        ranges.points.resize(num_points);
     }
 
     void sampleRanges(const Pose& pose, const Terrain &terrain)
     {
-        scan.true_pose = pose;
-
-        for (size_t i = 0; i < scan.points.size(); i++) {
-            double angle = i*2*M_PI / scan.points.size();
-            double true_dist = terrain.queryIntersection(pose, angle);
-            scan.points[i] = Point(terrain.queryIntersection(pose, angle), angle);
-            // TODO: Set using sensor model.
+        for (size_t i = 0; i < ranges.points.size(); i++) {
+            double angle = i*2*M_PI / ranges.points.size();
+            range_model.sample(angle, pose, terrain);
         }
     }
 
-    void sampleLandmarks(const Pose& pose, const Terrain &terrain)
+    void sampleFeatures(const Pose& pose, const Terrain &terrain)
     {
-        terrain.getObservableLandmarks(pose, landmarks);
+        feature_model.sample(features, pose, terrain);
     }
+
+private:
+    const RangeModel& range_model;
+    const FeatureModel& feature_model;
 };
 
 #endif

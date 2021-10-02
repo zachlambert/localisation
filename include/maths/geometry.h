@@ -114,7 +114,7 @@ inline Eigen::Vector2d getDirection(double angle)
     return Eigen::Vector2d(std::cos(angle), std::sin(angle));
 }
 
-void normaliseAngle(double& angle)
+inline void normaliseAngle(double& angle)
 {
     while (angle < -M_PI) angle += 2*M_PI;
     while (angle > M_PI) angle -= 2*M_PI;
