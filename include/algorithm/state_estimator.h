@@ -58,6 +58,8 @@ protected:
 
 class StateEstimatorEKF: public StateEstimator {
 public:
+    StateEstimateGaussian x;
+
     StateEstimatorEKF(const MotionModel& motion_model):
         StateEstimator(motion_model)
     {}
@@ -79,9 +81,6 @@ protected:
         // TODO
         return true;
     }
-
-private:
-    StateEstimateGaussian x;
 };
 
 #endif

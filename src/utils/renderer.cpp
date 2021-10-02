@@ -110,6 +110,33 @@ void drawTarget(
     window.draw(vertex_array);
 }
 
+void drawStateEstimatorEKF(
+    sf::RenderWindow& window,
+    const StateEstimatorEKF& state_estimator)
+{
+    drawPoseCovariance(
+        window,
+        state_estimator.x.pose,
+        state_estimator.x.covariance);
+    drawPose(
+        window,
+        state_estimator.x.pose,
+        0.2,
+        sf::Color::Black);
+}
+
+void drawStateEstimator(
+    sf::RenderWindow& window,
+    const StateEstimator& state_estimator)
+{
+    const StateEstimatorEKF* ekf = dynamic_cast<const StateEstimatorEKF*>(&state_estimator);
+    if (ekf) {
+        // drawStateEstimatorEKF(window, *ekf);
+        return;
+    }
+
+    // Not implemented
+}
 
 void drawState(sf::RenderWindow& window, const State& state)
 {
@@ -125,15 +152,7 @@ void drawState(sf::RenderWindow& window, const State& state)
         sf::Color(200, 100, 200));
 
     // State estimate
-    drawPoseCovariance(
-        window,
-        state.state_estimator.pose,
-        state.state_estimator.covariance);
-    drawPose(
-        window,
-        state.state_estimator.pose,
-        0.2,
-        sf::Color::Black);
+    drawStateEstimator(window, state.state_estimator);
 
     // Target
     drawTarget(
@@ -172,7 +191,7 @@ void drawState(sf::RenderWindow& window, const State& state)
         MarkerType::RING,
         0.4,
         sf::Color::Green,
-        state.state_estimator.pose);
+        state.state_estimator.getStateEstimate());
 }
 
 void Renderer::render()

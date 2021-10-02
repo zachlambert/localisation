@@ -50,7 +50,15 @@ public:
             double phi2_d;
             double phi2_phi2;
         } var_weights;
-        Config(): var_weights( {0, 0, 0, 0, 0, 0} ) {}
+        Config() {
+            var_weights.d_d = 0;
+            var_weights.d_phi1 = 0;
+            var_weights.d_phi2 = 0;
+            var_weights.phi1_d = 0;
+            var_weights.phi1_phi1 = 0;
+            var_weights.phi2_d = 0;
+            var_weights.phi2_phi2 = 0;
+        }
     };
     void setConfig(const Config& config) { this->config = config; }
 
@@ -102,23 +110,28 @@ private:
     {
         Params params;
         params.d = dT.position().norm();
-        params.phi1 = std::atan2(dT.position().y(), dT.position().x());
+        if (params.d < 1e-10) {
+            params.phi1 = 0;
+        } else {
+            params.phi1 = std::atan2(dT.position().y(), dT.position().x());
+        }
         params.phi2 = dT.orientation() - params.phi1;
+        return params;
     }
 
     Params getParamsVariances(const Params& params)const
     {
         Params vars;
         vars.d =
-            config.var_weights.d_d * params.d +
-            config.var_weights.d_phi1 * params.phi1 +
-            config.var_weights.d_phi2 * params.phi2;
+            config.var_weights.d_d * std::pow(params.d, 2) +
+            config.var_weights.d_phi1 * std::pow(params.phi1, 2) +
+            config.var_weights.d_phi2 * std::pow(params.phi2, 2);
         vars.phi1 =
-            config.var_weights.phi1_d * params.d +
-            config.var_weights.phi1_phi1 * params.phi1;
+            config.var_weights.phi1_d * std::pow(params.d, 2) +
+            config.var_weights.phi1_phi1 * std::pow(params.phi1, 2);
         vars.phi2 =
-            config.var_weights.phi2_d * params.d +
-            config.var_weights.phi2_phi2 * params.phi2;
+            config.var_weights.phi2_d * std::pow(params.d, 2) +
+            config.var_weights.phi2_phi2 * std::pow(params.phi2, 2);
 
         return vars;
     }

@@ -10,6 +10,8 @@
 #include "state/terrain.h"
 #include "utils/step.h"
 
+#include <iostream>
+
 
 struct State: public Step<State> {
 
@@ -81,7 +83,8 @@ struct State: public Step<State> {
     bool step_controller()
     {
         if (!controller.started()) {
-            controller.start(state_estimator.getStateEstimate(), target, dt);
+            controller.start(robot.pose, target, dt);
+            // controller.start(state_estimator.getStateEstimate(), target, dt);
         }
         return controller.step();
     }

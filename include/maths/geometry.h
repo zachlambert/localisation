@@ -58,7 +58,7 @@ class Velocity {
 public:
     Velocity()
     {
-        V.setIdentity();
+        V.setZero();
     }
 
     // Access state vector
