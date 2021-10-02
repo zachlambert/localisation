@@ -15,17 +15,16 @@ struct State: public Step<State> {
 
     double dt;
 
-    MotionModel motion_model;
-
     Terrain terrain;
     Robot robot;
     Lidar lidar;
     Pose target;
 
-    StateEstimator state_estimator;
+    StateEstimatorEKF state_estimator;
     Controller controller;
 
-    State():
+    State(
+            const MotionModel& motion_model):
         robot(&motion_model),
         state_estimator(&motion_model)
     {

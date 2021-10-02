@@ -1,5 +1,5 @@
-#ifndef MATHS_STATE_ESTIMATE_H
-#define MATHS_STATE_ESTIMATE_H
+#ifndef ALGORITHM_STATE_ESTIMATE_H
+#define ALGORITHM_STATE_ESTIMATE_H
 
 #include <vector>
 #include "maths/geometry.h"

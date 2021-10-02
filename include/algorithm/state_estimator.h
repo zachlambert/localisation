@@ -11,48 +11,62 @@
 #include "utils/step.h"
 
 
-class StateEstimator: public Step<StateEstimator> {
+class StateEstimatorEKF: public Step<StateEstimatorEKF> {
 public:
-    // Outputs
-    Pose pose;
-    Eigen::Matrix3d covariance;
-
-    StateEstimator(const MotionModel* motion_model):
+    StateEstimatorEKF(
+            const MotionModel& motion_model):
+            // const MeasurementModel& measurement_model): TODO
         motion_model(motion_model)
+        // measurement_model(measurement_model) TODO
     {
-        addStep(&StateEstimator::predict);
-        addStep(&StateEstimator::update);
+        addStep(&StateEstimatorEKF::predict);
+        addStep(&StateEstimatorEKF::update);
     }
 
-    void start(const Velocity& command, const PointCloud* scan, const Terrain* terrain, double dt)
+    // General function for getting a state estimate.
+    // May store the state estimate explicitly, or may calculate
+    // using a parameterisation (eg: particles).
+    virtual Pose getStateEstimate()const = 0;
+
+    // Provide the data for a new predict and update step.
+    // Needs the following information in general.
+    // - Control data (odometry)
+    // - Observations (scan)
+    // - Known map (terrain) [May or may not be used]
+    void start(const Odometry* odometry, const PointCloud* scan, const Terrain* terrain, double dt)
     {
-        this->command = command;
+        this->odometry = odometry;
         this->scan = scan;
         this->terrain = terrain;
         this->dt = dt;
         Step::start();
     }
 
+private:
     bool predict()
     {
-        Velocity twist = command*dt;
-        pose.setFromTransform(pose.transform() * twistToTransform(twist).transform());
+        state_estimate = motion_model.getGaussian(state_estimate, *odometry);
         return true;
     }
 
     bool update()
     {
+        // TODO
         return true;
     }
 
-protected:
-    const MotionModel* motion_model;
+    // Models
+    const MotionModel& motion_model;
+    // const MeasurementModel& measurement_model TODO
 
     // Inputs
-    Velocity command;
+    const Odometry* odometry = nullptr;
     const PointCloud* scan = nullptr;
     const Terrain* terrain = nullptr;
     double dt;
+
+    // State estimate
+    StateEstimateGaussian state_estimate;
 };
 
 

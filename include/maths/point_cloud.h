@@ -5,7 +5,6 @@
 #include <Eigen/Core>
 
 #include "maths/geometry.h"
-#include "utils/render_utils.h"
 
 
 struct Point {
