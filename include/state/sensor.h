@@ -27,7 +27,8 @@ public:
     {
         for (size_t i = 0; i < ranges.points.size(); i++) {
             double angle = i*2*M_PI / ranges.points.size();
-            range_model.sample(angle, pose, terrain);
+            ranges.points[i].range = range_model.sample(angle, pose, terrain);
+            ranges.points[i].angle = angle;
         }
     }
 

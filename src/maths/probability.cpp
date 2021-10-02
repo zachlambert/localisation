@@ -16,7 +16,7 @@ double evaluateGaussian(const Eigen::VectorXd& x, const Eigen::VectorXd& mean, c
 
 Eigen::VectorXd sampleGaussian(const Eigen::VectorXd& mean, const Eigen::MatrixXd& cov)
 {
-    std::default_random_engine generator;
+    static std::default_random_engine generator;
     std::normal_distribution<double> standard_gaussian(0, 1);
     Eigen::JacobiSVD<Eigen::MatrixXd> svd;
     svd.compute(cov, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -44,14 +44,14 @@ double evaluateGaussian(double x, double mean, double var)
 
 double sampleGaussian(double mean, double var)
 {
-    std::default_random_engine generator;
+    static std::default_random_engine generator;
     std::normal_distribution<double> gaussian(mean, std::sqrt(var));
     return gaussian(generator);
 }
 
 double sampleUniform(double a, double b)
 {
-    std::default_random_engine generator;
+    static std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(a, b);
     return distribution(generator);
 }
@@ -63,14 +63,14 @@ double evaluateUniform(double a, double b)
 
 int samplePoisson(double rate)
 {
-    std::default_random_engine generator;
+    static std::default_random_engine generator;
     std::poisson_distribution<int> distribution(rate);
     return distribution(generator);
 }
 
 double sampleExponential(double scale)
 {
-    std::default_random_engine generator;
+    static std::default_random_engine generator;
     std::exponential_distribution<double> distribution(1 / scale);
     return distribution(generator);
 }
