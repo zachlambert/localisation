@@ -55,3 +55,27 @@ double sampleUniform(double a, double b)
     std::uniform_real_distribution<double> distribution(a, b);
     return distribution(generator);
 }
+
+double evaluateUniform(double a, double b)
+{
+    return 1 / (b - a);
+}
+
+int samplePoisson(double rate)
+{
+    std::default_random_engine generator;
+    std::poisson_distribution<int> distribution(rate);
+    return distribution(generator);
+}
+
+double sampleExponential(double scale)
+{
+    std::default_random_engine generator;
+    std::exponential_distribution<double> distribution(1 / scale);
+    return distribution(generator);
+}
+
+double evaluateExponential(double x, double scale)
+{
+    return 1 / (1 - std::exp(-x / scale));
+}

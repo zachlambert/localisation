@@ -14,17 +14,20 @@ public:
     PointCloud scan;
     PointCloud landmarks;
 
+    Lidar(const MeasurementModel& range_measurement_model
+
     void setScanSize(size_t num_points)
     {
         scan.points.resize(num_points);
     }
 
-    void sample(const Pose& pose, const Terrain &terrain)
+    void sampleRanges(const Pose& pose, const Terrain &terrain)
     {
         scan.true_pose = pose;
 
         for (size_t i = 0; i < scan.points.size(); i++) {
             double angle = i*2*M_PI / scan.points.size();
+            double true_dist = terrain.queryIntersection(pose, angle);
             scan.points[i] = Point(terrain.queryIntersection(pose, angle), angle);
             // TODO: Set using sensor model.
         }

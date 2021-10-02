@@ -10,5 +10,11 @@ double evaluateGaussian(double x, double mean, double var);
 double sampleGaussian(double mean, double cov);
 
 double sampleUniform(double a, double b);
+double evaluateUniform(double a, double b);
+
+int samplePoisson(double rate);
+
+double sampleExponential(double scale);
+double evaluateExponential(double x, double scale);
 
 #endif

@@ -6,8 +6,15 @@
 
 // ====== Terrain =====
 
+void Terrain::addElementLandmarks(const Element& element)
+{
+    for (const auto& vertex: element.vertices) {
+        landmarks.points.push_back(Point(element.pos + vertex));
+        landmarks.descriptors.push_back(randomLandmarkDescriptor());
+    }
+}
 
-Eigen::VectorXd randomLandmarkDescriptor()
+Eigen::VectorXd Terrain::randomLandmarkDescriptor()const
 {
     const size_t N = 8;
 
@@ -16,16 +23,8 @@ Eigen::VectorXd randomLandmarkDescriptor()
     for (size_t i = 0; i < N; i++) {
         v(i) = (double)rand() / RAND_MAX;
     }
-    v.normalize();
+    v /= v.sum();
     return v;
-}
-
-void Terrain::addElementLandmarks(const Element& element)
-{
-    for (const auto& vertex: element.vertices) {
-        landmarks.points.push_back(Point(element.pos + vertex));
-        landmarks.descriptors.push_back(randomLandmarkDescriptor());
-    }
 }
 
 
