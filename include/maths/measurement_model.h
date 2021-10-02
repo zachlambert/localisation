@@ -120,21 +120,21 @@ public:
             if (sampleUniform(0, 1) < config.false_negative_p) {
                 features.points[i] = features.points.back();
                 features.points.pop_back();
-                features.descriptors[i] = features.descriptors.back();
-                features.descriptors.pop_back();
                 continue;
             }
+
             // Otherwise, add gaussian noise
-            features.points[i].setPolar(
-                features.points[i].dist() + sampleGaussian(0, config.range_var),
-                features.points[i].angle() + sampleGaussian(0, config.angle_var));
-            for (size_t j = 0; j < features.descriptors[i].size(); j++) {
-                double& value = features.descriptors[i](j);
+
+            features.points[i].range += sampleGaussian(0, config.range_var);
+            features.points[i].angle += sampleGaussian(0, config.angle_var);
+
+            for (size_t j = 0; j < features.points[i].descriptor.size(); j++) {
+                double& value = features.points[i].descriptor(j);
                 value += sampleGaussian(0, config.descriptor_var); 
                 if (value < 0) value = 0;
             }
             // Renormalise so max value = 1
-            features.descriptors[i] /= features.descriptors[i].sum();
+            features.points[i].descriptor /= features.points[i].descriptor.sum();
         }
 
         // Random number of false positives, using poission distribution
@@ -146,32 +146,75 @@ public:
             double dist = terrain.queryIntersection(pose, angle);
             // Random landmark descriptor
             Eigen::VectorXd descriptor = terrain.randomLandmarkDescriptor();
-            features.points.push_back(Point(dist, angle));
-            features.descriptors.push_back(descriptor);
+            features.points.push_back(Point(dist, angle, terrain.randomLandmarkDescriptor()));
         }
     }
 
-    double evaluateProbability(PointCloud& features, const Pose& pose, const Terrain& terrain)
+    double evaluateProbabilitySingle(const Point& yi, const Point& yi_mean)
     {
+        double p = 1;
+        p *= evaluateGaussian(yi.range, yi_mean.range, config.range_var);
+        double angle_dif = yi.angle - yi_mean.angle;
+        normaliseAngle(angle_dif);
+        p *= evaluateGaussian(0, angle_dif, config.angle_var);
+        for (size_t j = 0; j < yi_mean.descriptor.size(); j++) {
+            p *= evaluateGaussian(yi.descriptor(j), yi_mean.descriptor(j), config.descriptor_var);
+        }
+        return p;
+    }
 
+    double evaluateProbability(PointCloud& y, const Pose& pose, const Terrain& terrain)
+    {
+        PointCloud y_prior;
+        terrain.getObservableLandmarks(pose, y_prior);
+
+        std::vector<Correspondance> c;
+        getCorrespondances(c, y, y_prior);
+
+        double p = 1;
+        for (size_t i = 0; i < c.size(); i++) {
+            p *= evaluateProbabilitySingle(y.points[c[i].index_new], y_prior.points[c[i].index_prior]);
+        }
+        return p;
     }
 
     struct LinearModel {
         Eigen::VectorXd innovation;
         Eigen::MatrixXd C;
+        Eigen::MatrixXd R;
     };
-    LinearModel getLinearModel(const PointCloud& y, const Pose& pose, const Terrain& terrain)
+    LinearModel linearise(const PointCloud& y, const Pose& pose, const Terrain& terrain)
     {
-        PointCloud y_predicted;
-        terrain.getObservableLandmarks(pose, y_predicted);
+        PointCloud y_prior;
+        terrain.getObservableLandmarks(pose, y_prior);
+
+        std::vector<Correspondance> c;
+        getCorrespondances(c, y, y_prior);
+        size_t N = c.size();
+        size_t stride = y_prior.points[0].state().size();
 
         LinearModel linear_model;
-        linear_model.y_mean = true_features.getState();
-    }
+        linear_model.innovation.resize(N * stride);
+        linear_model.C.resize(N * stride, 3);
+        linear_model.R.resize(N * stride, N * stride);
+        linear_model.R.setZero();
 
-    double evaluateProbabilitySingle(const PointCloud& y, const PointCloud& y_mean, size_t index)
-    {
+        for (size_t i = 0; i < c.size(); i++) {
+            const Point& yi = y.points[c[i].index_new];
+            const Point& yi_prior = y_prior.points[c[i].index_prior];
+            linear_model.innovation = getPointInnovation(yi, yi_prior);
 
+            Eigen::VectorXd n = yi_prior.pos() - pose.position();
+            n.normalize();
+
+            linear_model.C.block(0, i*stride, stride, 3).setZero();
+            linear_model.C.block(0, i*stride, stride, 3).block(0, 0, 1, 2) = - n.transpose();
+            linear_model.C.block(0, i*stride, stride, 3).block(0, 1, 1, 2) = - crossProductMatrix(1) * n.transpose() / yi_prior.range;
+            linear_model.C.block(0, i*stride, stride, 3)(1, 2) = -1;
+
+            linear_model.R.block(i*stride, i*stride, stride, stride)(0,0) = 1;
+        }
+        return linear_model;
     }
 
     struct Correspondance {

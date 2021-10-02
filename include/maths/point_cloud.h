@@ -7,41 +7,40 @@
 #include "maths/geometry.h"
 
 
+// May or may not have a descriptor
 struct Point {
     double range;
     double angle;
     Eigen::VectorXd descriptor;
 
-    Point(): range(0), angle(0), descriptor() {}
-    Point(double range, double angle): range(range)
+    Point(): range(0), angle(0) {}
+    Point(double range, double angle): range(range), angle(angle) {}
+    Point(double range, double angle, const Eigen::VectorXd& descriptor):
+        range(range), angle(angle), descriptor(descriptor)
+    {}
 
-    double dist()const{ return pos.norm(); }
-    double angle()const{ return std::atan2(pos.y(), pos.x()); }
+    Eigen::Vector2d pos()const { return range * getDirection(angle); }
 
-    void setPolar(double dist, double angle) {
-        pos = dist * getDirection(angle);
-    }
-
-    Eigen::VectorXd getState()const {
+    Eigen::VectorXd state()const {
         Eigen::VectorXd yi;
         yi.resize(2 + descriptor.size());
-        yi(0) = dist();
-        yi(1) = points[index].angle();
-        yi.tail(descriptors[index].size()) = descriptors[index];
+        yi(0) = range;
+        yi(1) = angle;
+        yi.tail(descriptor.size()) = descriptor;
         return yi;
     }
 };
 
-class PointCloud {
-public:
-    Pose pose;
-    Pose true_pose; // Used for rendering
+struct PointCloud {
     std::vector<Point> points;
+    // May need additional information later
 };
 
-Eigen::VectorXd getPointInnovation(const PointCloud& 
+Eigen::VectorXd getPointInnovation(const Point& y, const Point& y_predicted)
 {
-    auto dif = k - mean;
+    Eigen::VectorXd dif = y.state() - y_predicted.state();
+    normaliseAngle(dif(1));
+    return dif;
 }
 
 #endif

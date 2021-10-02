@@ -9,8 +9,10 @@
 void Terrain::addElementLandmarks(const Element& element)
 {
     for (const auto& vertex: element.vertices) {
-        landmarks.points.push_back(Point(element.pos + vertex));
-        landmarks.descriptors.push_back(randomLandmarkDescriptor());
+        Eigen::VectorXd pos = element.pos + vertex;
+        double range = pos.norm();
+        double angle = std::atan2(pos.y(), pos.x());
+        landmarks.points.push_back(Point(range, angle, randomLandmarkDescriptor()));
     }
 }
 
@@ -81,24 +83,21 @@ double Terrain::queryIntersection(const Pose& pose, double angle)const
 
 void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out)const
 {
-    landmarks_out.true_pose = pose;
     landmarks_out.points.clear();
-    landmarks_out.descriptors.clear();
 
     static constexpr double intersection_allowance = 0.1;
     for (size_t i = 0; i < landmarks.points.size(); i++) {
 
         const Point& point = landmarks.points[i];
-        const Eigen::VectorXd& descriptor = landmarks.descriptors[i];
+        const Eigen::VectorXd& descriptor = landmarks.points[i].descriptor;
 
-        Eigen::Vector2d disp = point.pos - pose.position();
+        Eigen::Vector2d disp = point.pos() - pose.position();
         double dist = disp.norm();
         double angle = std::atan2(disp.y(), disp.x()) - pose.orientation();
         double intersect_dist = queryIntersection(pose, angle);
 
         if (dist < intersect_dist + intersection_allowance) {
-            landmarks_out.points.push_back(Point(dist, angle));
-            landmarks_out.descriptors.push_back(descriptor);
+            landmarks_out.points.push_back(Point(dist, angle, descriptor));
         }
     }
 }
