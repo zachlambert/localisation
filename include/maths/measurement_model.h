@@ -101,13 +101,12 @@ public:
         double descriptor_var;
         double false_negative_p;
         double false_positive_rate;
-
-        double correspondance_p_threshold;
     };
 
     void setConfig(const Config& config) { this->config = config; }
 
-    void sample(PointCloud& features, const Pose& pose, const Terrain& terrain)const
+    // for FeatureDetectorFake only
+    void sampleFakeFeatures(PointCloud& features, const Pose& pose, const Terrain& terrain)const
     {
         terrain.getObservableLandmarks(pose, features);
 
@@ -159,17 +158,13 @@ public:
         return p;
     }
 
-    double evaluateProbability(PointCloud& y, const Pose& pose, const Terrain& terrain)const
+    double evaluateProbability(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)
     {
-        PointCloud y_prior;
-        terrain.getObservableLandmarks(pose, y_prior);
-
-        std::vector<Correspondance> c;
-        getCorrespondances(c, y, y_prior);
-
         double p = 1;
-        for (size_t i = 0; i < c.size(); i++) {
-            p *= evaluateProbabilitySingle(y.points[c[i].index_new], y_prior.points[c[i].index_prior]);
+        for (size_t i = 0; i < correspondances.size(); i++) {
+            p *= evaluateProbabilitySingle(
+                y.points[correspondances[i].index_new],
+                y_prior.points[correspondances[i].index_prior]);
         }
         return p;
     }
@@ -179,14 +174,9 @@ public:
         Eigen::MatrixXd C;
         Eigen::MatrixXd R;
     };
-    LinearModel linearise(const PointCloud& y, const Pose& pose, const Terrain& terrain)const
+    LinearModel linearise(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)
     {
-        PointCloud y_prior;
-        terrain.getObservableLandmarks(pose, y_prior);
-
-        std::vector<Correspondance> c;
-        getCorrespondances(c, y, y_prior);
-        size_t N = c.size();
+        size_t N = correspondances.size();
         size_t stride = y_prior.points[0].state().size();
 
         LinearModel linear_model;
@@ -195,12 +185,12 @@ public:
         linear_model.R.resize(N * stride, N * stride);
         linear_model.R.setZero();
 
-        for (size_t i = 0; i < c.size(); i++) {
-            const Point& yi = y.points[c[i].index_new];
-            const Point& yi_prior = y_prior.points[c[i].index_prior];
+        for (size_t i = 0; i < correspondances.size(); i++) {
+            const Point& yi = y.points[correspondances[i].index_new];
+            const Point& yi_prior = y_prior.points[correspondances[i].index_prior];
             linear_model.innovation = getPointInnovation(yi, yi_prior);
 
-            Eigen::VectorXd n = yi_prior.pos() - pose.position();
+            Eigen::VectorXd n = yi_prior.pos();
             n.normalize();
 
             linear_model.C.block(0, i*stride, stride, 3).setZero();
@@ -213,30 +203,50 @@ public:
         return linear_model;
     }
 
-    struct Correspondance {
-        size_t index_prior; // Known map or previous observation
-        size_t index_new; // New observation
-        double p;
-        Correspondance(size_t index_prior, size_t index_new, double p):
-            index_prior(index_prior), index_new(index_new), p(p)
-        {}
+private:
+    Config config;
+};
+
+class FeatureMatcher {
+public:
+    FeatureMatcher(const FeatureModel& feature_model):
+        feature_model(feature_model)
+    {}
+
+    struct Config {
+        bool use_feature_model; // Otherwise just nearest neighbour search of descriptors
+        double correspondance_p_threshold;
     };
+    void setConfig(const Config& config) { this->config = config; }
+
     void getCorrespondances(std::vector<Correspondance>& c, const PointCloud& y_new, const PointCloud& y_prior)const
     {
         for (size_t i = 0; i < y_new.points.size(); i++) {
-            double p_best = 0;
+            double score_best = 0;
             size_t j_best = 0;
             for (size_t j = 0; j < y_prior.points.size(); j++) {
-                double p_j = evaluateProbabilitySingle(y_new.points[i], y_prior.points[j]);
+                double score_j;
+                if (config.use_feature_model) {
+                    score_j = feature_model.evaluateProbabilitySingle(y_new.points[i], y_prior.points[j]);
+                } else {
+                    // Score it as if we have a gaussian with idenity covariance, so we get scores
+                    // over the range [0, 1] with small difference -> 1, the same as if using probability
+                    score_j = std::exp(-(y_new.points[i].descriptor - y_prior.points[j].descriptor).squaredNorm());
+                }
+                if (score_j > score_best) {
+                    score_best = score_j;
+                    j_best = j;
+                }
             }
-            if (p_best > config.correspondance_p_threshold) {
-                c.push_back(Correspondance(j_best, i, p_best));
+            if (score_best > config.correspondance_p_threshold) {
+                c.push_back(Correspondance(j_best, i, score_best));
             }
         }
     }
 
 private:
     Config config;
+    const FeatureModel& feature_model;
 };
 
 #endif

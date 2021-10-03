@@ -9,15 +9,23 @@
 #include "maths/point_cloud.h"
 #include "state/terrain.h"
 #include "utils/step.h"
+#include "maths/measurement_model.h"
+#include "algorithm/feature_detector.h"
 
 
 class StateEstimator: public Step<StateEstimator> {
 public:
     StateEstimator(
-            const MotionModel& motion_model):
-            // const MeasurementModel& measurement_model): TODO
-        motion_model(motion_model)
-        // measurement_model(measurement_model) TODO
+            const MotionModel& motion_model,
+            const RangeModel& range_model,
+            const FeatureModel& feature_model,
+            const FeatureDetector& feature_detector,
+            const FeatureMatcher& feature_matcher):
+        motion_model(motion_model),
+        range_model(range_model),
+        feature_model(feature_model),
+        feature_detector(feature_detector),
+        feature_matcher(feature_matcher)
     {
         addStep(&StateEstimator::predict);
         addStep(&StateEstimator::update);
@@ -33,12 +41,12 @@ public:
     // Provide the data for a new predict and update step.
     // Needs the following information in general.
     // - Control data (odometry)
-    // - Observations (scan)
+    // - Observations (ranges)
     // - Known map (terrain) [May or may not be used]
-    void start(Velocity* twistEstimate, const PointCloud* scan, const Terrain* terrain)
+    void start(Velocity* twistEstimate, const PointCloud* ranges, const Terrain* terrain)
     {
         this->twistEstimate = twistEstimate;
-        this->scan = scan;
+        this->ranges = ranges;
         this->terrain = terrain;
         Step::start();
     }
@@ -49,11 +57,14 @@ protected:
 
     // Models
     const MotionModel& motion_model;
-    // const MeasurementModel& measurement_model TODO
+    const RangeModel& range_model;
+    const FeatureModel& feature_model;
+    const FeatureDetector& feature_detector;
+    const FeatureMatcher& feature_matcher;
 
     // Inputs
     const Velocity* twistEstimate;
-    const PointCloud* scan = nullptr;
+    const PointCloud* ranges = nullptr;
     const Terrain* terrain = nullptr;
 };
 
@@ -62,8 +73,18 @@ class StateEstimatorEKF: public StateEstimator {
 public:
     StateEstimateGaussian x;
 
-    StateEstimatorEKF(const MotionModel& motion_model):
-        StateEstimator(motion_model)
+    StateEstimatorEKF(
+            const MotionModel& motion_model,
+            const RangeModel& range_model,
+            const FeatureModel& feature_model,
+            const FeatureDetector& feature_detector,
+            const FeatureMatcher& feature_matcher):
+        StateEstimator(
+            motion_model,
+            range_model,
+            feature_model,
+            feature_detector,
+            feature_matcher)
     {}
 
     virtual Pose getStateEstimate()const
@@ -86,9 +107,18 @@ protected:
 
     virtual bool update()
     {
-        // TODO
+        if (!features_found) {
+            feature_detector.findFeatures(*ranges, features);
+            features_found = true;
+            return false;
+        }
+
+        features_found = false;
         return true;
     }
+private:
+    bool features_found = false;
+    PointCloud features;
 };
 
 #endif
