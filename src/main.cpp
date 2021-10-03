@@ -45,7 +45,7 @@ int main()
         feature_model.setConfig(config);
     }
 
-    // ===== Configure simulation ===== 
+    // ===== Configure simulation =====
 
     Sim sim(motion_model, range_model);
     {
@@ -64,7 +64,7 @@ int main()
     FeatureMatcher feature_matcher(feature_model);
     {
         FeatureMatcher::Config config;
-        config.correspondance_p_threshold = 0; // TODO: Increase a bit
+        config.correspondance_p_threshold = 0.01;
         config.use_feature_model = true;
         feature_matcher.setConfig(config);
     }

@@ -3,17 +3,18 @@
 
 #include <Eigen/Dense>
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 #include "maths/geometry.h"
 #include "maths/motion_model.h"
 #include "maths/point_cloud.h"
 #include "state/terrain.h"
-#include "utils/step.h"
+#include "utils/multistep.h"
 #include "maths/measurement_model.h"
 #include "algorithm/feature_detector.h"
 
 
-class StateEstimator: public Step<StateEstimator> {
+class StateEstimator: public Multistep {
 public:
     StateEstimator(
             const MotionModel& motion_model,
@@ -27,8 +28,6 @@ public:
         feature_detector(feature_detector),
         feature_matcher(feature_matcher)
     {
-        addStep(&StateEstimator::predict);
-        addStep(&StateEstimator::update);
     }
 
     // General function for getting a state estimate.
@@ -48,12 +47,10 @@ public:
         this->twistEstimate = twistEstimate;
         this->ranges = ranges;
         this->terrain = terrain;
-        Step::start();
+        Multistep::start();
     }
 
 protected:
-    virtual bool predict() = 0;
-    virtual bool update() = 0;
 
     // Models
     const MotionModel& motion_model;
@@ -72,7 +69,10 @@ protected:
 class StateEstimatorEKF: public StateEstimator {
 public:
     StateEstimateGaussian x;
-    PointCloud features; // Public for rendering
+     // Public for rendering
+    PointCloud features;
+    PointCloud features_prior;
+    std::vector<Correspondance> correspondances;
 
     StateEstimatorEKF(
             const MotionModel& motion_model,
@@ -86,7 +86,12 @@ public:
             feature_model,
             feature_detector,
             feature_matcher)
-    {}
+    {
+        addStep(std::bind(&StateEstimatorEKF::predict, this), "predict");
+        addStep(std::bind(&StateEstimatorEKF::feature_detection, this), "feature detection");
+        addStep(std::bind(&StateEstimatorEKF::feature_matching, this), "feature matching");
+        addStep(std::bind(&StateEstimatorEKF::update, this), "update");
+    }
 
     virtual Pose getStateEstimate()const
     {
@@ -99,26 +104,41 @@ public:
         x.covariance.setZero();
     }
 
-protected:
-    virtual bool predict()
+private:
+    bool predict()
     {
         x = motion_model.getGaussian(x, *twistEstimate);
+        // TODO
+        // Replace with:
+        // motion_model.getLinearModel()
+        // kalman_filter.predict(...)
         return true;
     }
 
-    virtual bool update()
+    bool feature_detection()
     {
-        if (!features_found) {
-            feature_detector.findFeatures(*ranges, features);
-            features_found = true;
-            return false;
-        }
-
-        features_found = false;
+        correspondances.clear();
+        feature_detector.findFeatures(*ranges, features);
         return true;
     }
+
+    bool feature_matching()
+    {
+        terrain->getObservableLandmarks(x.pose, features_prior);
+        feature_matcher.getCorrespondances(correspondances, features, features_prior);
+        return true;
+    }
+
+    bool update()
+    {
+        // TODO
+        // feature_model.getLinearModel()
+        // kalman_filter.update_nonlinear(...)
+        return true;
+    }
+
 private:
-    bool features_found = false;
+    int step_number = 0;
 };
 
 #endif

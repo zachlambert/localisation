@@ -4,23 +4,23 @@
 #include <Eigen/Core>
 
 #include "maths/geometry.h"
-#include "utils/step.h"
+#include "utils/multistep.h"
 
 
-class Controller: public Step<Controller> {
+class Controller: public Multistep {
 public:
     Controller()
     {
-        addStep(&Controller::step_main);
+        addStep(std::bind(&Controller::update, this), "update");
     }
 
     void start(const Pose& pose_estimate)
     {
         this->pose_estimate = pose_estimate;
-        Step::start();
+        Multistep::start();
     }
 
-    bool step_main()
+    bool update()
     {
         Eigen::Vector2d disp = target.position() - pose_estimate.position();
         disp = pose_estimate.rotation().transpose() * disp;

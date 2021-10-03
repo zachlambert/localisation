@@ -30,6 +30,12 @@ void addMesh(
     const std::vector<Eigen::Vector2d>& vertices,
     sf::Color color);
 
+void addLinePrimitive(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& start,
+    const Eigen::Vector2d& end,
+    sf::Color color);
+
 enum class LineType {
     LINE,
     ARROW

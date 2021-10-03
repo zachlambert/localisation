@@ -221,6 +221,7 @@ public:
 
     void getCorrespondances(std::vector<Correspondance>& c, const PointCloud& y_new, const PointCloud& y_prior)const
     {
+        c.clear();
         for (size_t i = 0; i < y_new.points.size(); i++) {
             double score_best = 0;
             size_t j_best = 0;

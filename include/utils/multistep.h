@@ -1,26 +1,21 @@
-#ifndef STEP_H
-#define STEP_H
+#ifndef MULTISTEP_H
+#define MULTISTEP_H
 
 #include <string>
 #include <vector>
+#include <functional>
 
 
-template <typename T>
-class Step {
+class Multistep {
     // step_t is a function pointer to a method of class T
-    typedef bool (T::*step_t)();
+    typedef std::function<bool()> step_t;
 
 public:
-    // Returns true if this object has finished stepping
-    // Want child classes to always call this step() function.
-    // Therefore, avoid child classes overriding step() with something else
-    // by making virtual and final.
-    virtual bool step()final
+    bool step()
     {
         if (step_number >= steps.size()) return true;
 
-        // Class T will extend Step<T>. Then, this static cast will compile.
-        bool current_step_done = ((static_cast<T*>(this))->*steps[step_number])();
+        bool current_step_done = steps[step_number]();
 
         if (current_step_done) {
             step_number++;
@@ -51,9 +46,10 @@ protected:
         step_number = 0;
         is_started = true;
     }
-    void addStep(step_t step)
+    void addStep(step_t step, const std::string& step_name)
     {
         steps.push_back(step);
+        step_names.push_back(step_name);
     }
 
     int step_number = 0;
@@ -61,6 +57,5 @@ protected:
     std::vector<std::string> step_names;
     bool is_started = false;
 };
-
 
 #endif

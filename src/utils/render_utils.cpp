@@ -286,6 +286,15 @@ void addMarker(
     }
 }
 
+void addLinePrimitive(
+    sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& start,
+    const Eigen::Vector2d& end,
+    sf::Color color)
+{
+    vertex_array.append(createVertex(color, start));
+    vertex_array.append(createVertex(color, end));
+}
 
 // ===== addLine =====
 

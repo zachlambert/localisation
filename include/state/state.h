@@ -6,13 +6,13 @@
 #include "maths/geometry.h"
 #include "maths/motion_model.h"
 #include "state/sim.h"
-#include "utils/step.h"
+#include "utils/multistep.h"
 
 #include <iostream>
 
 
-struct State: public Step<State> {
-
+class State: public Multistep {
+public:
     double dt;
     Sim& sim;
     StateEstimator& state_estimator;
@@ -25,16 +25,15 @@ struct State: public Step<State> {
         state_estimator(state_estimator),
         controller(controller)
     {
-        addStep(&State::stepSim);
-        addStep(&State::stepStateEstimator);
-        addStep(&State::stepController);
+        addStep(std::bind(&State::stepSim, this), "sim");
+        addStep(std::bind(&State::stepStateEstimator, this), "state_estimator");
+        addStep(std::bind(&State::stepController, this), "controller");
     }
 
     void start(double dt)
     {
         this->dt = dt;
-        step_number = 0;
-        Step::start();
+        Multistep::start();
     }
 
     bool stepSim()

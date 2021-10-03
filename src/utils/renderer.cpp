@@ -118,6 +118,29 @@ void drawPointCloud(
     window.draw(vertex_array);
 }
 
+void drawCorrespondances(
+    sf::RenderWindow& window,
+    const PointCloud& y_prior,
+    const PointCloud& y,
+    const std::vector<Correspondance>& correspondances,
+    sf::Color line_color,
+    const Pose& pose)
+{
+    sf::VertexArray vertex_array;
+    vertex_array.setPrimitiveType(sf::Triangles);
+    for (size_t i = 0; i < correspondances.size(); i++) {
+        addLine(
+            vertex_array,
+            y_prior.points[correspondances[i].index_prior].pos(),
+            y.points[correspondances[i].index_new].pos(),
+            LineType::LINE,
+            line_color,
+            0.05);
+    }
+
+    window.draw(vertex_array, getRenderTransform(pose));
+}
+
 // Target
 void drawTarget(
     sf::RenderWindow& window,
@@ -147,13 +170,30 @@ void drawStateEstimatorEKF(
         state_estimator.x.pose,
         state_estimator.x.covariance);
 
-    // Sensor information in state estimator frame
+    // Detected features
     drawPointCloud(
         window,
         state_estimator.features,
         MarkerType::RING,
         0.4,
         sf::Color::Green,
+        state_estimator.getStateEstimate());
+    // Prior features
+    drawPointCloud(
+        window,
+        state_estimator.features_prior,
+        MarkerType::RING,
+        0.4,
+        sf::Color::Blue,
+        state_estimator.getStateEstimate());
+
+    // Correspondances
+    drawCorrespondances(
+        window,
+        state_estimator.features_prior,
+        state_estimator.features,
+        state_estimator.correspondances,
+        sf::Color::Black,
         state_estimator.getStateEstimate());
 }
 
