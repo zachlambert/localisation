@@ -14,7 +14,7 @@ public:
         motion_model(motion_model)
     {}
 
-    void stepModel(const Velocity& target_u, double dt)
+    void step(const Velocity& target_u, double dt)
     {
         Velocity twist = target_u * dt;
         pose = motion_model.sample(pose, twist);

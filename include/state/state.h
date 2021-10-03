@@ -5,9 +5,7 @@
 #include "algorithm/state_estimator.h"
 #include "maths/geometry.h"
 #include "maths/motion_model.h"
-#include "state/robot.h"
-#include "state/sensor.h"
-#include "state/terrain.h"
+#include "state/sim.h"
 #include "utils/step.h"
 
 #include <iostream>
@@ -16,37 +14,18 @@
 struct State: public Step<State> {
 
     double dt;
-
-    Terrain terrain;
-    Robot robot;
-    Lidar lidar;
-    Pose target;
-
+    Sim& sim;
     StateEstimator& state_estimator;
     Controller& controller;
 
-    State(  const MotionModel& motion_model,
-            const RangeModel& range_model,
-            const FeatureModel& feature_model,
+    State(  Sim& sim,
             StateEstimator& state_estimator,
             Controller& controller):
-        robot(motion_model),
-        lidar(range_model, feature_model),
+        sim(sim),
         state_estimator(state_estimator),
         controller(controller)
     {
-        createTerrain(terrain);
-
-        robot.pose.position() = Eigen::Vector2d(-3, 3);
-        robot.pose.orientation() = 0.5;
-
-        state_estimator.resetEstimate(robot.pose);
-
-        lidar.setScanSize(100);
-
-        target.position() = Eigen::Vector2d(2, 2);
-
-        addStep(&State::stepModel);
+        addStep(&State::stepSim);
         addStep(&State::stepStateEstimator);
         addStep(&State::stepController);
     }
@@ -58,11 +37,9 @@ struct State: public Step<State> {
         Step::start();
     }
 
-    bool stepModel()
+    bool stepSim()
     {
-        robot.stepModel(controller.command, dt);
-        lidar.sampleRanges(robot.pose, terrain);
-        lidar.sampleFeatures(robot.pose, terrain);
+        sim.step(dt, controller.command);
         return true;
     }
 
@@ -70,9 +47,9 @@ struct State: public Step<State> {
     {
         if (!state_estimator.started()) {
             state_estimator.start(
-                &robot.twistEstimate,
-                &lidar.features,
-                &terrain
+                &sim.robot.twistEstimate,
+                &sim.range_sensor.features,
+                &sim.terrain
             );
         }
         return state_estimator.step();
@@ -81,8 +58,7 @@ struct State: public Step<State> {
     bool stepController()
     {
         if (!controller.started()) {
-            controller.start(robot.pose, target, dt);
-            // controller.start(state_estimator.getStateEstimate(), target, dt);
+            controller.start(state_estimator.getStateEstimate());
         }
         return controller.step();
     }

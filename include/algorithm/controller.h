@@ -14,18 +14,16 @@ public:
         addStep(&Controller::step_main);
     }
 
-    void start(const Pose& pose, const Pose& target, double dt)
+    void start(const Pose& pose_estimate)
     {
-        this->pose = pose;
-        this->target = target;
-        this->dt = dt;
+        this->pose_estimate = pose_estimate;
         Step::start();
     }
 
     bool step_main()
     {
-        Eigen::Vector2d disp = target.position() - pose.position();
-        disp = pose.rotation().transpose() * disp;
+        Eigen::Vector2d disp = target.position() - pose_estimate.position();
+        disp = pose_estimate.rotation().transpose() * disp;
         double e_theta = std::atan2(disp.y(), disp.x());
 
         double kv = 2;
@@ -44,15 +42,15 @@ public:
 
         return true;
     }
+    
+    void setTarget(const Pose& target) { this->target = target; }
 
     // Outputs
     Velocity command;
 
 protected:
-    double dt;
-
     // Inputs
-    Pose pose;
+    Pose pose_estimate;
     Pose target;
 };
 #endif

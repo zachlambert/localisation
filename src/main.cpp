@@ -6,7 +6,8 @@
 
 int main()
 {
-    // Configure models and the state estimator
+    // ===== Configure models =====
+
     MotionModel motion_model;
     {
         MotionModel::Config config;
@@ -38,23 +39,64 @@ int main()
         config.angle_var = std::pow(0.01, 2);
         config.descriptor_var = std::pow(0.05, 2);
 
-        config.correspondance_p_threshold = 0; // TODO: Increase a bit
         config.false_negative_p = 0.1;
         config.false_positive_rate = 4;
 
         feature_model.setConfig(config);
     }
 
-    StateEstimatorEKF state_estimator(motion_model);
+    // ===== Configure simulation ===== 
 
-    Controller controller;
+    Sim sim(motion_model, range_model);
+    {
+        createTerrain(sim.terrain);
 
-    State state(
+        sim.robot.pose.position() = Eigen::Vector2d(-3, 3);
+        sim.robot.pose.orientation() = 0.5;
+
+        sim.range_sensor.setScanSize(100);
+    }
+
+    // ===== Configure algorithms =====
+
+    FeatureDetectorFake feature_detector(sim.terrain, sim.robot, feature_model);
+
+    FeatureMatcher feature_matcher(feature_model);
+    {
+        FeatureMatcher::Config config;
+        config.correspondance_p_threshold = 0; // TODO: Increase a bit
+        config.use_feature_model = true;
+        feature_matcher.setConfig(config);
+    }
+
+    StateEstimatorEKF state_estimator(
         motion_model,
         range_model,
         feature_model,
+        feature_detector,
+        feature_matcher
+    );
+    {
+        state_estimator.resetEstimate(sim.robot.pose);
+    }
+
+    Controller controller;
+    {
+        Pose initial_target;
+        initial_target.position() = Eigen::Vector2d(2, 2);
+        initial_target.orientation() = 0;
+        controller.setTarget(initial_target);
+    }
+
+    // ===== Initialise program state (sim + algorithms) =====
+
+    State state(
+        sim,
         state_estimator,
-        controller);
+        controller
+    );
+
+    // ===== Create a window and start runnig =====
 
     Camera camera;
     sf::RenderWindow window(sf::VideoMode(1200, 800), "Localisation");
@@ -96,8 +138,11 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left) {
                     sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
                     sf::Vector2f mapped_pos = window.mapPixelToCoords(mouse_pos);
-                    state.target.position().x() = mapped_pos.x;
-                    state.target.position().y() = mapped_pos.y;
+
+                    Pose target;
+                    target.position().x() = mapped_pos.x;
+                    target.position().y() = mapped_pos.y;
+                    state.controller.setTarget(target);
                 }
             }
         }
