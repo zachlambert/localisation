@@ -146,81 +146,79 @@ void drawStateEstimatorEKF(
         window,
         state_estimator.x.pose,
         state_estimator.x.covariance);
+
+    // Sensor information in state estimator frame
+    drawPointCloud(
+        window,
+        state_estimator.features,
+        MarkerType::RING,
+        0.4,
+        sf::Color::Green,
+        state_estimator.getStateEstimate());
+}
+
+void drawSim(sf::RenderWindow& window, const Sim& sim)
+{
+    // Terrain
+    drawTerrain(
+        window,
+        sim.terrain);
+    drawPointCloud(
+        window,
+        sim.terrain.landmarks,
+        MarkerType::SQUARE,
+        0.2,
+        sf::Color(200, 100, 200));
+
+    // Robot
     drawPose(
         window,
-        state_estimator.x.pose,
+        sim.robot.pose,
         0.2,
-        sf::Color::Black);
+        sf::Color::Red);
+
+    // Ranges in true frame
+    drawPointCloud(
+        window,
+        sim.range_sensor.ranges,
+        MarkerType::CIRCLE,
+        0.05,
+        sf::Color::Blue,
+        sim.robot.pose);
 }
 
 void drawStateEstimator(
     sf::RenderWindow& window,
     const StateEstimator& state_estimator)
 {
-    const StateEstimatorEKF* ekf = dynamic_cast<const StateEstimatorEKF*>(&state_estimator);
-    if (ekf) {
+    // Implementation specific rendering
+
+    if (const StateEstimatorEKF* ekf = dynamic_cast<const StateEstimatorEKF*>(&state_estimator)) {
         drawStateEstimatorEKF(window, *ekf);
-        return;
+    } else {
+        // Not implemented
     }
 
-    // Not implemented
+    // State estimate
+    drawPose(
+        window,
+        state_estimator.getStateEstimate(),
+        0.2,
+        sf::Color::Black);
 }
 
-void drawState(sf::RenderWindow& window, const State& state)
+void drawController(sf::RenderWindow& window, const Controller& controller)
 {
-    // Terrain
-    drawTerrain(
-        window,
-        state.terrain);
-    drawPointCloud(
-        window,
-        state.terrain.landmarks,
-        MarkerType::SQUARE,
-        0.2,
-        sf::Color(200, 100, 200));
-
-    // State estimate
-    drawStateEstimator(window, state.state_estimator);
+    // No implementation specific rendering
 
     // Target
     drawTarget(
         window,
-        state.target,
+        controller.getTarget(),
         0.2,
         sf::Color::Black);
-
-    // Robot
-    drawPose(
-        window,
-        state.robot.pose,
-        0.2,
-        sf::Color::Red);
-
-    // Sensor information in true frame
-    drawPointCloud(
-        window,
-        state.lidar.ranges,
-        MarkerType::CIRCLE,
-        0.05,
-        sf::Color::Blue,
-        state.robot.pose);
-    drawPointCloud(
-        window,
-        state.lidar.features,
-        MarkerType::RING,
-        0.4,
-        sf::Color::Magenta,
-        state.robot.pose);
-
-    // Sensor information in state estimator frame
-    drawPointCloud(
-        window,
-        state.lidar.features,
-        MarkerType::RING,
-        0.4,
-        sf::Color::Green,
-        state.state_estimator.getStateEstimate());
 }
+
 
 void Renderer::render()
 {
@@ -232,7 +230,9 @@ void Renderer::render()
     view.zoom(1.0/camera.scale);
     window.setView(view);
 
-    drawState(window, state);
+    drawSim(window, state.sim);
+    drawStateEstimator(window, state.state_estimator);
+    drawController(window, state.controller);
 
     window.display();
 }

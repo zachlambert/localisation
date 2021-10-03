@@ -72,6 +72,7 @@ protected:
 class StateEstimatorEKF: public StateEstimator {
 public:
     StateEstimateGaussian x;
+    PointCloud features; // Public for rendering
 
     StateEstimatorEKF(
             const MotionModel& motion_model,
@@ -118,7 +119,6 @@ protected:
     }
 private:
     bool features_found = false;
-    PointCloud features;
 };
 
 #endif
