@@ -35,12 +35,12 @@ int main()
     FeatureModel feature_model;
     {
         FeatureModel::Config config;
-        config.range_var = std::pow(0.1, 2);
-        config.angle_var = std::pow(0.01, 2);
-        config.descriptor_var = std::pow(0.05, 2);
+        config.range_var = std::pow(0.5, 2);
+        config.angle_var = std::pow(0.1, 2);
+        config.descriptor_var = std::pow(0.3, 2);
 
-        config.false_negative_p = 0;
-        config.false_positive_rate = 0;
+        config.false_negative_p = 0.2;
+        config.false_positive_rate = 7;
 
         feature_model.setConfig(config);
     }
@@ -64,7 +64,7 @@ int main()
     FeatureMatcher feature_matcher(feature_model);
     {
         FeatureMatcher::Config config;
-        config.correspondance_p_threshold = 0.01;
+        config.correspondance_p_threshold = 10; // probability density
         config.use_feature_model = true;
         feature_matcher.setConfig(config);
     }

@@ -72,6 +72,8 @@ static void ekfUpdateMultiple(
 {
     // If haven't moved, covariance still at zero, no need for update.
     if (estimate.covariance.determinant() == 0) return;
+    // If we have no data, return;
+    if (y.empty()) return;
 
     size_t Ny = g[0].C.rows();
 
