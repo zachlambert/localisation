@@ -67,43 +67,34 @@ void Pose::setFromTransform(const Eigen::Isometry2d &T)
     orientation() = std::atan2(R(1,0), R(0,0));
 }
 
-Pose operator*(const Pose& lhs, const Pose& rhs)
-{
-    Eigen::Isometry2d T = lhs.transform() * rhs.transform();
-    Pose pose;
-    pose.setFromTransform(T);
-    return pose;
-}
-
-Pose twistToTransform(const Velocity& twist)
+Pose Velocity::getTwistTransform()const
 {
     Pose pose;
-    if (twist.angular() == 0) {
-        pose.position() = twist.linear();
+    if (angular() == 0) {
+        pose.position() = linear();
         return pose;
     }
-    double theta = twist.angular();
-    Eigen::Vector2d v_hat = twist.linear() / theta;
+    double theta = angular();
+    Eigen::Vector2d v_hat = linear() / theta;
     auto S = crossProductMatrix(1);
     pose.position() = v_hat*std::sin(theta) + S*v_hat*(1-std::cos(theta));
-    pose.orientation() = twist.angular();
+    pose.orientation() = angular();
     return pose;
 }
 
-Velocity transformToTwist(const Pose& pose)
+void Velocity::setFromTwistTransform(const Pose& pose)
 {
-    Velocity vel;
     double theta = pose.orientation();
     if (theta == 0) {
-        vel.linear() = pose.position();
-        return vel;
+        linear() = pose.position();
+        angular() = 0;
+        return;
     }
 
     Eigen::Matrix2d M = (std::sin(theta)/(1-std::cos(theta))) * Eigen::Matrix2d::Identity();
     auto S = crossProductMatrix(1);
-    vel.linear() = 0.5*(M - S)*pose.position();
-    vel.angular() = theta;
-    return vel;
+    linear() = 0.5*(M - S)*pose.position();
+    angular() = theta;
 }
 
 Eigen::Vector2d transformPoint(const Pose& pose, const Eigen::Vector2d& point)

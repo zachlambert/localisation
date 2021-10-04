@@ -11,6 +11,8 @@
 #include "maths/point_cloud.h"
 #include "maths/probability.h"
 #include "state/terrain.h"
+#include "algorithm/kalman_filter.h"
+#include <iostream>
 
 
 class RangeModel {
@@ -158,7 +160,7 @@ public:
         return p;
     }
 
-    double evaluateProbability(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)
+    double evaluateProbability(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)const
     {
         double p = 1;
         for (size_t i = 0; i < correspondances.size(); i++) {
@@ -169,38 +171,30 @@ public:
         return p;
     }
 
-    struct LinearModel {
-        Eigen::VectorXd innovation;
-        Eigen::MatrixXd C;
-        Eigen::MatrixXd R;
-    };
-    LinearModel linearise(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)
+    LinearisedObservationEquation linearise(const Pose& x_prior, const Point& y_prior)const
     {
-        size_t N = correspondances.size();
-        size_t stride = y_prior.points[0].state().size();
+        LinearisedObservationEquation g;
+        size_t Ny = y_prior.state().size();
 
-        LinearModel linear_model;
-        linear_model.innovation.resize(N * stride);
-        linear_model.C.resize(N * stride, 3);
-        linear_model.R.resize(N * stride, N * stride);
-        linear_model.R.setZero();
+        g.y_prior = y_prior;
+        g.C.resize(Ny, 3);
+        g.R.resize(Ny, Ny);
+        g.R.setZero();
 
-        for (size_t i = 0; i < correspondances.size(); i++) {
-            const Point& yi = y.points[correspondances[i].index_new];
-            const Point& yi_prior = y_prior.points[correspondances[i].index_prior];
-            linear_model.innovation = getPointInnovation(yi, yi_prior);
+        Eigen::VectorXd dir = Eigen::Rotation2Dd(x_prior.orientation()) * y_prior.pos();
+        dir.normalize();
 
-            Eigen::VectorXd n = yi_prior.pos();
-            n.normalize();
+        g.C.setZero();
+        g.C.block(0, 0, 1, 2) = - dir.transpose();
+        g.C.block(1, 0, 1, 2) = - (crossProductMatrix(1) * dir).transpose() / y_prior.range;
+        g.C(1, 2) = -1;
 
-            linear_model.C.block(0, i*stride, stride, 3).setZero();
-            linear_model.C.block(0, i*stride, stride, 3).block(0, 0, 1, 2) = - n.transpose();
-            linear_model.C.block(0, i*stride, stride, 3).block(0, 1, 1, 2) = - (crossProductMatrix(1) * n).transpose() / yi_prior.range;
-            linear_model.C.block(0, i*stride, stride, 3)(1, 2) = -1;
+        g.R(0, 0) = config.range_var;
+        g.R(1, 1) = config.angle_var;
+        g.R.block(2, 2, Ny-2, Ny-2).setIdentity();
+        g.R.block(2, 2, Ny-2, Ny-2) *= config.descriptor_var;
 
-            linear_model.R.block(i*stride, i*stride, stride, stride)(0,0) = 1;
-        }
-        return linear_model;
+        return g;
     }
 
 private:

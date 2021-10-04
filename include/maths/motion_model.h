@@ -4,8 +4,8 @@
 #include <random>
 
 #include "maths/geometry.h"
-#include "algorithm/state_estimate.h"
 #include "maths/probability.h"
+#include "algorithm/kalman_filter.h"
 
 
 // ===== How the motion model works =====
@@ -62,24 +62,23 @@ public:
     };
     void setConfig(const Config& config) { this->config = config; }
 
-    virtual StateEstimateGaussian getGaussian(const StateEstimateGaussian& x_prev, const Velocity& twist)const
+    LinearisedStateEquation linearise(const Pose& x_prev, const Velocity& u)const
     {
-        StateEstimateGaussian dT = getTwistTransformStateEstimate(twist);
+        GaussianStateEstimate dT = getTwistTransformStateEstimate(u);
 
-        // Linearise the state update equation about the mean x_prev and twist transform
-        Eigen::Matrix3d A, B;
-        A.setIdentity();
-        A.block<2,1>(0,2) = x_prev.pose.rotation() * (-1)*crossProductMatrix(dT.pose.position());
-        B.setIdentity();
-        B.block<2,2>(0,0) = x_prev.pose.rotation();
+        LinearisedStateEquation f;
+        f.x = x_prev.transform() * dT.pose.transform();
 
-        // Find the mean of the next state with the non-linear function,
-        // and use the linearised version to get the covariance.
-        StateEstimateGaussian x;
-        x.pose.setFromTransform(x_prev.pose.transform() * dT.pose.transform());
-        x.covariance = A*x_prev.covariance*A.transpose() + B*dT.covariance*B.transpose();
+        f.A.setIdentity();
+        f.A.block<2,1>(0,2) = x_prev.rotation() * (-1)*crossProductMatrix(dT.pose.position());
+        f.B.setIdentity();
+        f.B.block<2,2>(0,0) = x_prev.rotation();
 
-        return x;
+        f.Sigma_u = dT.covariance;
+
+        f.Q.setZero();
+
+        return f;
     }
 
     virtual Pose sample(const Pose& x_prev, const Velocity& twist)const
@@ -144,13 +143,13 @@ private:
         return dT;
     }
 
-    StateEstimateGaussian getTwistTransformStateEstimate(const Velocity& twist)const
+    GaussianStateEstimate getTwistTransformStateEstimate(const Velocity& twist)const
     {
-        Pose dT = twistToTransform(twist);
+        Pose dT = twist.getTwistTransform();
         Params params = poseToParams(dT);
         Params vars = getParamsVariances(params);
 
-        StateEstimateGaussian dT_estimate;
+        GaussianStateEstimate dT_estimate;
         dT_estimate.pose = dT;
 
         Eigen::Matrix3d A; // delta_x = A delta_params
@@ -171,7 +170,7 @@ private:
 
     Pose sampleTwistTransform(const Velocity& twist)const
     {
-        Pose dT_mean = twistToTransform(twist);
+        Pose dT_mean = twist.getTwistTransform();
         Params params_mean = poseToParams(dT_mean);
         Params params_vars = getParamsVariances(params_mean);
 
@@ -186,7 +185,7 @@ private:
 
     double evaluateTwistTransformProbability(const Pose& dT, const Velocity& twist)
     {
-        Pose dT_mean = twistToTransform(twist);
+        Pose dT_mean = twist.getTwistTransform();
         Params params_mean = poseToParams(dT_mean);
         Params params_vars = getParamsVariances(params_mean);
 

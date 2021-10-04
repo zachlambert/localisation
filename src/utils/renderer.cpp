@@ -167,8 +167,8 @@ void drawStateEstimatorEKF(
 {
     drawPoseCovariance(
         window,
-        state_estimator.x.pose,
-        state_estimator.x.covariance);
+        state_estimator.estimate.pose,
+        state_estimator.estimate.covariance);
 
     // Detected features
     drawPointCloud(

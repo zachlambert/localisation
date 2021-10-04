@@ -39,8 +39,8 @@ int main()
         config.angle_var = std::pow(0.01, 2);
         config.descriptor_var = std::pow(0.05, 2);
 
-        config.false_negative_p = 0.1;
-        config.false_positive_rate = 4;
+        config.false_negative_p = 0;
+        config.false_positive_rate = 0;
 
         feature_model.setConfig(config);
     }
@@ -123,7 +123,7 @@ int main()
                     }
                     running = true;
                 }
-                if (event.key.code == sf::Keyboard::W) {
+                else if (event.key.code == sf::Keyboard::W) {
                     if (running) {
                         running = false;
                         state.start(fixed_dt);
@@ -132,6 +132,9 @@ int main()
                             state.start(fixed_dt);
                         }
                     }
+                }
+                else if (event.key.code == sf::Keyboard::E) {
+                    state_estimator.resetEstimate(sim.robot.pose);
                 }
             }
             if (event.type == sf::Event::MouseButtonReleased) {

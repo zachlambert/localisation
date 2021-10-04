@@ -51,43 +51,40 @@ private:
     Eigen::Vector3d x;
 };
 
-
-Pose operator*(const Pose& lhs, const Pose& rhs);
-
-class Velocity {
+class Velocity: public Eigen::Vector3d {
 public:
     Velocity()
     {
-        V.setZero();
+        setZero();
     }
-
-    // Access state vector
-    const Eigen::Vector3d &state()const { return V; }
-    Eigen::Vector3d &state() { return V; }
 
     // Access position
     const Eigen::VectorBlock<const Eigen::Vector3d, 2> linear()const {
-        return V.head<2>();
+        return head<2>();
     }
     Eigen::VectorBlock<Eigen::Vector3d, 2> linear() {
-        return V.head<2>();
+        return head<2>();
     }
 
     // Access orientation
     const double angular()const {
-        return V(2);
+        return (*this)(2);
     }
     double &angular() {
-        return V(2);
+        return (*this)(2);
     }
 
-    Velocity& operator*=(double s) {
-        V *= s;
+    Pose getTwistTransform()const;
+    void setFromTwistTransform(const Pose& pose);
+
+    // Required when inheriting
+    template<typename OtherDerived>
+    Velocity(const Eigen::MatrixBase<OtherDerived>& other): Eigen::Vector3d(other) {}
+    template<typename OtherDerived>
+    Velocity& operator=(const Eigen::MatrixBase<OtherDerived>& other) {
+        this->Eigen::Vector3d::operator=(other);
         return *this;
     }
-
-private:
-    Eigen::Vector3d V;
 };
 
 static Velocity operator*(const Velocity& lhs, double rhs)
@@ -102,10 +99,6 @@ static Velocity operator*(double lhs, const Velocity& rhs)
     result *= lhs;
     return result;
 }
-
-Pose twistToTransform(const Velocity& twist);
-
-Velocity transformToTwist(const Pose& pose);
 
 Eigen::Vector2d transformPoint(const Pose& pose, const Eigen::Vector2d& point);
 

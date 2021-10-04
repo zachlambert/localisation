@@ -12,6 +12,7 @@
 #include "utils/multistep.h"
 #include "maths/measurement_model.h"
 #include "algorithm/feature_detector.h"
+#include "algorithm/kalman_filter.h"
 
 
 class StateEstimator: public Multistep {
@@ -68,7 +69,7 @@ protected:
 
 class StateEstimatorEKF: public StateEstimator {
 public:
-    StateEstimateGaussian x;
+    GaussianStateEstimate estimate;
      // Public for rendering
     PointCloud features;
     PointCloud features_prior;
@@ -95,23 +96,20 @@ public:
 
     virtual Pose getStateEstimate()const
     {
-        return x.pose;
+        return estimate.pose;
     }
 
     virtual void resetEstimate(const Pose& pose)
     {
-        x.pose = pose;
-        x.covariance.setZero();
+        estimate.pose = pose;
+        estimate.covariance.setZero();
     }
 
 private:
     bool predict()
     {
-        x = motion_model.getGaussian(x, *twistEstimate);
-        // TODO
-        // Replace with:
-        // motion_model.getLinearModel()
-        // kalman_filter.predict(...)
+        auto f = motion_model.linearise(estimate.pose, *twistEstimate);
+        ekfPredict(estimate, f);
         return true;
     }
 
@@ -124,16 +122,28 @@ private:
 
     bool feature_matching()
     {
-        terrain->getObservableLandmarks(x.pose, features_prior);
+        terrain->getObservableLandmarks(estimate.pose, features_prior);
         feature_matcher.getCorrespondances(correspondances, features, features_prior);
         return true;
     }
 
     bool update()
     {
-        // TODO
-        // feature_model.getLinearModel()
-        // kalman_filter.update_nonlinear(...)
+#if 1
+        std::vector<LinearisedObservationEquation> g(correspondances.size());
+        std::vector<Point> y(correspondances.size());
+        for (size_t i = 0; i < correspondances.size(); i++) {
+            g[i] = feature_model.linearise(estimate.pose, features_prior.points[correspondances[i].index_prior]);
+            y[i] = features.points[correspondances[i].index_new];
+        }
+        ekfUpdateMultiple(estimate, y, g);
+#else
+        LinearisedObservationEquation g;
+        for (size_t i = 0; i < correspondances.size(); i++) {
+            g = feature_model.linearise(estimate.pose, features_prior.points[correspondances[i].index_prior]);
+            ekfUpdate(estimate, features.points[correspondances[i].index_new], g);
+        }
+#endif
         return true;
     }
 
