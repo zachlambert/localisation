@@ -146,6 +146,13 @@ int main()
                     target.position().x() = mapped_pos.x;
                     target.position().y() = mapped_pos.y;
                     state.controller.setTarget(target);
+                } else if (event.mouseButton.button == sf::Mouse::Right) {
+                    sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
+                    sf::Vector2f mapped_pos = window.mapPixelToCoords(mouse_pos);
+
+                    // Kidnap robot
+                    state.sim.robot.pose.position().x() = mapped_pos.x;
+                    state.sim.robot.pose.position().y() = mapped_pos.y;
                 }
             }
         }

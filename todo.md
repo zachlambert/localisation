@@ -1,68 +1,100 @@
 
-# Landmarks
+# UI
 
-[x] Add landmarks to terrain definition
-[X] Add a function to get all visible features, where a feature has
-    a range, angle and descriptor vector.
+[ ] Write text for controls
+[ ] Write text for all steps and highlight the current step
+[ ] Build with ImGui
+[ ] Add button to replace q/w/e inputs
+[ ] Add inputs to dynamically reconfigure model/state_estimator parameters
+Don't bother with adding input to dynamically change which controller to
+use. 
 
-# Features
+# Localisation under known map
 
-[ ] Add a FeatureExtractor class, from which you can choose a feature
-    extraction method. For the moment, only implement a fake feature
-    extraction method that gets all observable features from the terrain
-    then adds noise. (and possibly adds some outliers and miss others).
-[ ] Add a FeatureMatcher class, that takes an input of two vectors of features,
-    (possibly with one being features of known landmarks), and identifies
-    correspondances.
+## Gmm (Gaussian mixture model) state estimator (also with landmarks/features)
 
-# Visualisation
+Extend EKF State Estimator to maintain a number of gaussians.
+Each undergo the same predict + update steps.
+Need to calculate the probability of each component.
+After this, perform a resampling step, where you randomly select new
+gaussians from the old ones, with a pmf relating to their probabilities.
+(ie: same as particle filter).
 
-[ ] Add covariance markers (ellipse for xy, segment for theta)
-[x] Add visualisation of landmarks on map (squares).
-[ ] Add visualisation of features (raw measurements=circles, features=crosses).
-[ ] Have the FeatureExtractor draw identified features (circle outline).
-[ ] Have the FeatureMatcher draw lines between correspondances.
+Note 1: With the resampling step, have a random probability of selecting a
+random pose instead of resampling, to help with the kidnapped robot problem.
 
-# State estimation
+Note 2: When evaluating the state estimate, the simplest method is to average
+out all the mixture means (weighted by their component probaility). However,
+it might be worth using a clustering algorithm to identify components that
+belong to the same mode. (eg: if we have two clusters of estimates, this is
+bimodal, where there are two regions of possible location). After doing this, output the most likely pose as the state estimate. (Don't bother rendering averages of other clusters, rendering will be drawing all components anyway so you can see the clusters).
 
-[ ] Have the state estimator track pose with a motion model, that
-    adds a random error between target velocity and actual velocity.
-    (Can also treat this as if the command velocity is like a measured
-     incremental transform, such that we model the error between this
-     transform (from pose tracking) and the actual incremental transform).
-[ ] Add this to a state_estimator::EkfSlam class, which localises
-    with a known map and known correspondances.
-[ ] Implement the update step, which corrects the pose based on observed
-    feature locations and expected locations (based on correspondances
-    and map)
-[ ] Modify EkfSlam to have unknown correspondances.
-[ ] Implement state_estimator::ekf::EkfSlamMht, which uses multi-hypothesis
-    tracking to make it robust to out
-    correspondances may be incorrect, and there are outliers. With this,
+## Particle filter with landmarks
 
-# Models
+NOTE: Probably don't bother with this one. Using raw data with the particle
+filter is more interesting. This is pretty much the same as the gmm filter
+anyway, but worse.
+The advantage of the particle filter, is that we don't need to linearise our
+observations, so aren't limited to using features.
 
-Provide classes to provide function for probabilistic models.
-Can set parameters for these, then pass to various parts of the program
-where they are used (ie: simulation and in state estimation).
-Keep the maths within these, have other classes (eg: Robot) only make
-use of these functions.
+## Particle filter with raw data
 
-Add these models in as required.
+Note: There may be room to adjust how the particles are sampled.
+The ideal q(x) is f(x, u)g(y, x).
+However, usually you use f(x, u) since it is difficult to sample from
+g(x, y).
+However, we can perform scan alignment to align our observations with the known
+map (or the prior scan). This gives a mean pose from which we can sample around.
 
-All the below models should provide function to:
-- Evaluate the forward model, eg: p(x_k | x_{k-1}, u_k)
-- Sample from the forward model
-- Evaluate the inverse model, eg: p(u_k | x_{k-1}, x_k)
-- Sample from the inverse model
-- Linearise the forward model to get mean and covariance (if applicable)
+## Histogram filter with raw data
 
-[ ] Add a MotionModel class:
-    - Forward: p(x_k | x_{k-1}, i_k) [+ Linearised]
-    - Inverse: p(u_k | x_{k-1}, x_k)
-[ ] Add a LidarModel class:
-    - Forward: p({y_k} | x_k, m) [+ Linearised]
-    - Inverse: p(x_k | {y_k}, m)
-[ ] Add a FeatureModel class (when features are known)
-    - Forward: p({f_k} | x_k, m)
-    - Inverse: p(x_k | {f_k}, m)
+Maintain a histogram of p(x) about the mean pose. ie: Discretise p(x).
+Only update this in the neighbourhood of our current estimate to avoid having to update over the whole map. (And make the grid aligned with the current state estimate).
+
+If we want to handle an unknown initial position / kidnapping, can maintain a number of histogram estimates and 
+
+## KLD-sampling
+
+A modification of MCL (particle filter) that dynamically adjusts the number of particles used, depending on how many are needed. Makes it more efficient.
+
+
+# Mapping
+
+[ ] Add a generic map class. Think about what this will need to do. Also add rendering.
+[ ] Implement a fixed-size occupancy grid. Use one of the previous localisation methods (with a map of known features) while updating the occupancy map - which provides more detail. (OR may just test without a state estimator, using the actual pose).
+
+# SLAM
+
+## EKF-SLAM
+
+Feature based SLAM using EKF.
+Online method (ie: every time it observes data, it processes this to update its estimate of the pose AND map).
+
+## Graph-SLAM
+
+Also feature-based, using gaussian methods.
+However, is more flexible than EKF-SLAM.
+Is an online method. It accumulates information (in the form of constraints), and then the optimisation is done offline, which optimises the pose and map estimate. (ie: optimises the pose graph).
+
+## Sparse extended information filter
+
+Optional.
+
+## FastSLAM
+
+Method using particle filters.
+Optional.
+
+
+## My idea of how to do SLAM
+
+One of the previous methods may end up being equivalent to this method, but haven't looked into them much.
+This method may also be too computationally expensive to be practical, but I think its worth having a look at.
+There are probably various other reasons it won't work, but we will see.
+
+Map: Update an occupancy map with latest observations and current (optimal) pose estimate, using the range model.
+Predict: Propagage gaussian pose estimate with motion model.
+Update: Localise within prior map, using the range model.
+(repeat)
+
+It is mathematically optimal and doesn't use features.

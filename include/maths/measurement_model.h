@@ -224,8 +224,7 @@ public:
                 if (config.use_feature_model) {
                     score_j = feature_model.evaluateProbabilitySingle(y_new.points[i], y_prior.points[j]);
                 } else {
-                    // Score it as if we have a gaussian with idenity covariance, so we get scores
-                    // over the range [0, 1] with small difference -> 1, the same as if using probability
+                    // Score it as if we have a gaussian with idenity covariance
                     score_j = std::exp(-(y_new.points[i].descriptor - y_prior.points[j].descriptor).squaredNorm());
                 }
                 if (score_j > score_best) {
