@@ -12,7 +12,6 @@
 #include "utils/multistep.h"
 #include "maths/measurement_model.h"
 #include "algorithm/feature_detector.h"
-#include "algorithm/kalman_filter.h"
 
 
 class StateEstimator: public Multistep {
@@ -69,8 +68,12 @@ protected:
 
 class StateEstimatorEkf: public StateEstimator {
 public:
-    GaussianStateEstimate estimate;
-     // Public for rendering
+    struct Estimate {
+        Pose pose;
+        Eigen::Matrix3d covariance;
+    };
+
+    Estimate estimate;
     PointCloud features;
     PointCloud features_prior;
     std::vector<Correspondance> correspondances;
@@ -91,20 +94,31 @@ private:
     bool feature_matching();
     bool update();
 
-private:
     int step_number = 0;
 };
 
 
-class StateEstimatorHmm: public StateEstimator {
+class StateEstimatorMht: public StateEstimator {
 public:
-    GaussianStateEstimate estimate;
-     // Public for rendering
-    PointCloud features;
-    PointCloud features_prior;
-    std::vector<Correspondance> correspondances;
+    struct Estimate {
+        struct Component {
+            Pose pose;
+            Eigen::Matrix3d covariance;
+            double probability;
+        };
+        std::vector<Component> components;
+    };
 
-    StateEstimatorHmm(
+    Estimate estimate;
+    PointCloud features;
+
+    struct FeatureMatchResult {
+        PointCloud features_prior;
+        std::vector<Correspondance> correspondances;
+    };
+    std::vector<FeatureMatchResult> component_feature_match_results;
+
+    StateEstimatorMht(
             const MotionModel& motion_model,
             const RangeModel& range_model,
             const FeatureModel& feature_model,
@@ -120,7 +134,8 @@ private:
     bool feature_matching();
     bool update();
 
-private:
+    void sampleInitialComponent(Pose& pose, Eigen::Matrix3d& cov)const;
+
     int step_number = 0;
 };
 

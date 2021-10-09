@@ -34,8 +34,8 @@ void StateEstimatorEkf::resetEstimate(const Pose& pose)
 
 bool StateEstimatorEkf::predict()
 {
-    auto f = motion_model.linearise(estimate.pose, *twistEstimate);
-    ekfPredict(estimate, f);
+    auto linear_model = motion_model.linearise(estimate.pose, *twistEstimate);
+    ekfPredict(estimate.pose.state(), estimate.covariance, linear_model);
     return true;
 }
 
@@ -54,12 +54,15 @@ bool StateEstimatorEkf::feature_matching()
 
 bool StateEstimatorEkf::update()
 {
-    std::vector<LinearisedObservationEquation> g(correspondances.size());
+    std::vector<LinearModelUpdate<3, Eigen::Dynamic>> linear_models(correspondances.size());
     std::vector<Point> y(correspondances.size());
+
     for (size_t i = 0; i < correspondances.size(); i++) {
-        g[i] = feature_model.linearise(estimate.pose, features_prior.points[correspondances[i].index_prior]);
-        y[i] = features.points[correspondances[i].index_new];
+        const Point& y_prior = features_prior.points[correspondances[i].index_prior];
+        const Point& y = features.points[correspondances[i].index_new];
+
+        linear_models[i] = feature_model.linearise(estimate.pose, y_prior, y);
     }
-    ekfUpdateMultiple(estimate, y, g);
+    ekfUpdateMultiple(estimate.pose.state(), estimate.covariance, linear_models);
     return true;
 }

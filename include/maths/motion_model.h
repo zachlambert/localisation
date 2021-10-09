@@ -5,7 +5,7 @@
 
 #include "maths/geometry.h"
 #include "maths/probability.h"
-#include "algorithm/kalman_filter.h"
+#include "algorithm/gaussian_methods.h"
 
 
 // ===== How the motion model works =====
@@ -62,23 +62,24 @@ public:
     };
     void setConfig(const Config& config) { this->config = config; }
 
-    LinearisedStateEquation linearise(const Pose& x_prev, const Velocity& u)const
+    LinearModelPredict<3, 3> linearise(const Pose& x_prev, const Velocity& u)const
     {
-        GaussianStateEstimate dT = getTwistTransformStateEstimate(u);
+        LinearModelPredict<3, 3> linear_model;
 
-        LinearisedStateEquation f;
-        f.x = x_prev.transform() * dT.pose.transform();
+        Pose dT = u.getTwistTransform();
+        Pose pose = x_prev.transform() * dT.transform();
+        linear_model.x_next = pose.state();
 
-        f.A.setIdentity();
-        f.A.block<2,1>(0,2) = x_prev.rotation() * (-1)*crossProductMatrix(dT.pose.position());
-        f.B.setIdentity();
-        f.B.block<2,2>(0,0) = x_prev.rotation();
+        linear_model.A.setIdentity();
+        linear_model.A.block<2,1>(0,2) = x_prev.rotation() * (-1)*crossProductMatrix(pose.position());
+        linear_model.B.setIdentity();
+        linear_model.B.block<2,2>(0,0) = x_prev.rotation();
 
-        f.Sigma_u = dT.covariance;
+        linear_model.Sigma_u = getTwistCovariance(u);
 
-        f.Q.setZero();
+        linear_model.Q.setZero();
 
-        return f;
+        return linear_model;
     }
 
     virtual Pose sample(const Pose& x_prev, const Velocity& twist)const
@@ -143,14 +144,11 @@ private:
         return dT;
     }
 
-    GaussianStateEstimate getTwistTransformStateEstimate(const Velocity& twist)const
+    Eigen::Matrix3d getTwistCovariance(const Velocity& twist)const
     {
         Pose dT = twist.getTwistTransform();
         Params params = poseToParams(dT);
         Params vars = getParamsVariances(params);
-
-        GaussianStateEstimate dT_estimate;
-        dT_estimate.pose = dT;
 
         Eigen::Matrix3d A; // delta_x = A delta_params
         A.setZero();
@@ -163,9 +161,9 @@ private:
             vars.d, vars.phi1, vars.phi2
         ).asDiagonal();
 
-        dT_estimate.covariance = A * params_cov * A.transpose();
+        Eigen::Matrix3d cov = A * params_cov * A.transpose();
 
-        return dT_estimate;
+        return cov;
     }
 
     Pose sampleTwistTransform(const Velocity& twist)const
