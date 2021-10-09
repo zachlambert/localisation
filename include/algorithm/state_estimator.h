@@ -11,6 +11,8 @@
 #include "state/terrain.h"
 #include "utils/multistep.h"
 #include "maths/measurement_model.h"
+#include "maths/feature_model.h"
+#include "algorithm/feature_matcher.h"
 #include "algorithm/feature_detector.h"
 
 
@@ -18,12 +20,12 @@ class StateEstimator: public Multistep {
 public:
     StateEstimator(
             const MotionModel& motion_model,
-            const RangeModel& range_model,
+            const MeasurementModel& measurement_model,
             const FeatureModel& feature_model,
             const FeatureDetector& feature_detector,
             const FeatureMatcher& feature_matcher):
         motion_model(motion_model),
-        range_model(range_model),
+        measurement_model(measurement_model),
         feature_model(feature_model),
         feature_detector(feature_detector),
         feature_matcher(feature_matcher)
@@ -54,7 +56,7 @@ protected:
 
     // Models
     const MotionModel& motion_model;
-    const RangeModel& range_model;
+    const MeasurementModel& measurement_model;
     const FeatureModel& feature_model;
     const FeatureDetector& feature_detector;
     const FeatureMatcher& feature_matcher;
@@ -75,12 +77,11 @@ public:
 
     Estimate estimate;
     PointCloud features;
-    PointCloud features_prior;
-    std::vector<Correspondance> correspondances;
+    FeatureMatcher::Result match_result;
 
     StateEstimatorEkf(
             const MotionModel& motion_model,
-            const RangeModel& range_model,
+            const MeasurementModel& range_model,
             const FeatureModel& feature_model,
             const FeatureDetector& feature_detector,
             const FeatureMatcher& feature_matcher);
@@ -111,16 +112,11 @@ public:
 
     Estimate estimate;
     PointCloud features;
-
-    struct FeatureMatchResult {
-        PointCloud features_prior;
-        std::vector<Correspondance> correspondances;
-    };
-    std::vector<FeatureMatchResult> component_feature_match_results;
+    std::vector<FeatureMatcher::Result> match_results;
 
     StateEstimatorMht(
             const MotionModel& motion_model,
-            const RangeModel& range_model,
+            const MeasurementModel& measurement_model,
             const FeatureModel& feature_model,
             const FeatureDetector& feature_detector,
             const FeatureMatcher& feature_matcher);

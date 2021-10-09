@@ -34,8 +34,6 @@ public:
     void addElementLandmarks(const Element& element);
     double queryIntersection(const Pose& pose, double angle)const;
     void getObservableLandmarks(const Pose& pose, PointCloud& landmarks)const;
-
-    Eigen::VectorXd randomLandmarkDescriptor()const;
 };
 
 

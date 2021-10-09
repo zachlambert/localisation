@@ -4,13 +4,13 @@
 
 StateEstimatorEkf::StateEstimatorEkf(
         const MotionModel& motion_model,
-        const RangeModel& range_model,
+        const MeasurementModel& measurement_model,
         const FeatureModel& feature_model,
         const FeatureDetector& feature_detector,
         const FeatureMatcher& feature_matcher):
     StateEstimator(
         motion_model,
-        range_model,
+        measurement_model,
         feature_model,
         feature_detector,
         feature_matcher)
@@ -42,11 +42,13 @@ bool StateEstimatorEkf::predict()
 bool StateEstimatorEkf::feature_detection()
 {
     feature_detector.findFeatures(*ranges, features);
+    match_result.observed_features = &features;
     return true;
 }
 
 bool StateEstimatorEkf::feature_matching()
 {
+    terrain->setFeatureIdentifiers(estimate.pose, match_result);
     terrain->getObservableLandmarks(estimate.pose, features_prior);
     feature_matcher.getCorrespondances(correspondances, features, features_prior);
     return true;

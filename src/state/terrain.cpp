@@ -16,19 +16,6 @@ void Terrain::addElementLandmarks(const Element& element)
     }
 }
 
-Eigen::VectorXd Terrain::randomLandmarkDescriptor()const
-{
-    const size_t N = 8;
-
-    Eigen::VectorXd v;
-    v.resize(N);
-    for (size_t i = 0; i < N; i++) {
-        v(i) = (double)rand() / RAND_MAX;
-    }
-    v /= v.sum();
-    return v;
-}
-
 
 
 // Functions used in query_intersection

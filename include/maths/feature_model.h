@@ -4,7 +4,6 @@
 #include "maths/geometry.h"
 #include "maths/point_cloud.h"
 #include "maths/probability.h"
-#include "state/terrain.h"
 #include "algorithm/gaussian_methods.h"
 
 
@@ -20,48 +19,57 @@ public:
 
     void setConfig(const Config& config) { this->config = config; }
 
-    // for FeatureDetectorFake only
-    void sampleFakeFeatures(PointCloud& features, const Pose& pose, const Terrain& terrain)const
+    void sample(
+        const PointCloud& measurements,
+        const PointCloud& known_features,
+        const std::vector<bool>& indicators,
+        PointCloud& observed_features)const
     {
-        terrain.getObservableLandmarks(pose, features);
+        observed_features.points.clear();
 
-        for (size_t i = 0; i < features.points.size(); i++) {
+        if (known_features.points.empty()) return;
+        const size_t DESCRIPTOR_SIZE = known_features.points[0].descriptor.size();
+
+        for (size_t i = 0; i < known_features.points.size(); i++) {
+            if (!indicators[i]) continue;
+
             // Random probability of missing a feature (false negative)
             if (sampleUniform(0, 1) < config.false_negative_p) {
-                features.points[i] = features.points.back();
-                features.points.pop_back();
                 continue;
             }
 
-            // Otherwise, add gaussian noise
+            // Otherwise, add gaussian noise to corresponding known feature
+            Point feature = known_features.points[i];
 
-            features.points[i].range += sampleGaussian(0, config.range_var);
-            features.points[i].angle += sampleGaussian(0, config.angle_var);
+            feature.range += sampleGaussian(0, config.range_var);
+            feature.angle += sampleGaussian(0, config.angle_var);
 
-            for (size_t j = 0; j < features.points[i].descriptor.size(); j++) {
-                double& value = features.points[i].descriptor(j);
+            for (size_t j = 0; j < feature.descriptor.size(); j++) {
+                double& value = feature.descriptor(j);
                 value += sampleGaussian(0, config.descriptor_var);
                 if (value < 0) value = 0;
             }
             // Renormalise so max value = 1
-            features.points[i].descriptor /= features.points[i].descriptor.sum();
+            feature.descriptor /= feature.descriptor.sum();
+
+            observed_features.points.push_back(feature);
         }
 
         // Random number of false positives, using poission distribution
         int num_false_positives = samplePoisson(config.false_positive_rate);
         for (size_t i = 0; i < num_false_positives; i++) {
-            // Pick angle randomly
-            double angle = sampleUniform(-M_PI, M_PI);
-            // Ray cast distance
-            double dist = terrain.queryIntersection(pose, angle);
+            // Pick measurement randomly
+            const Point& measurement = measurements.points[rand() % measurements.points.size()];
             // Random landmark descriptor
-            Eigen::VectorXd descriptor = terrain.randomLandmarkDescriptor();
-            features.points.push_back(Point(dist, angle, terrain.randomLandmarkDescriptor()));
+            Eigen::VectorXd descriptor = randomDescriptor(DESCRIPTOR_SIZE);
+            observed_features.points.push_back(Point(measurement.range, measurement.angle, descriptor));
         }
     }
 
     double evaluateProbability(const Point& y_prior, const Point& y)const
     {
+        // NOTE: Ignores false positives and negatives. Assumes match is correct.
+
         double p = 1;
         p *= evaluateGaussian(y.range, y_prior.range, config.range_var);
         double angle_dif = y.angle - y_prior.angle;
@@ -72,19 +80,6 @@ public:
         }
         return p;
     }
-
-#if 0 // Don't think I need this
-    double evaluateProbability(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)const
-    {
-        double p = 1;
-        for (size_t i = 0; i < correspondances.size(); i++) {
-            p *= evaluateProbabilitySingle(
-                y.points[correspondances[i].index_new],
-                y_prior.points[correspondances[i].index_prior]);
-        }
-        return p;
-    }
-#endif
 
     LinearModelUpdate<3, Eigen::Dynamic> linearise(const Pose& x_prior, const Point& y_prior, const Point& y)const
     {
