@@ -13,9 +13,15 @@ struct Point {
     Eigen::VectorXd descriptor;
 
     Point(): pos(0, 0) {}
+    Point(const Eigen::Vector2d& pos): pos(pos) {}
     Point(const Eigen::Vector2d& pos, const Eigen::VectorXd& descriptor):
         pos(pos), descriptor(descriptor)
     {}
+
+    void setPolar(double range, double angle)
+    {
+        pos = range * getDirection(angle);
+    }
 
     double range(const Pose& frame=Pose())const
     { 
@@ -39,7 +45,7 @@ struct Point {
 };
 
 struct PointCloud {
-    Pose frame;
+    // Pose frame;
     std::vector<Point> points;
 };
 
