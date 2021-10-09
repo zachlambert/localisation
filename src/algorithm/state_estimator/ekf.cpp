@@ -48,20 +48,19 @@ bool StateEstimatorEkf::feature_detection()
 
 bool StateEstimatorEkf::feature_matching()
 {
-    terrain->setFeatureIdentifiers(estimate.pose, match_result);
-    terrain->getObservableLandmarks(estimate.pose, features_prior);
-    feature_matcher.getCorrespondances(correspondances, features, features_prior);
+    terrain->queryKnownFeatures(estimate.pose, match_result.known_features, match_result.indicators);
+    feature_matcher.findMatches(estimate.pose, match_result);
     return true;
 }
 
 bool StateEstimatorEkf::update()
 {
-    std::vector<LinearModelUpdate<3, Eigen::Dynamic>> linear_models(correspondances.size());
-    std::vector<Point> y(correspondances.size());
+    std::vector<LinearModelUpdate<3, Eigen::Dynamic>> linear_models(match_result.matches.size());
+    std::vector<Point> y(match_result.matches.size());
 
-    for (size_t i = 0; i < correspondances.size(); i++) {
-        const Point& y_prior = features_prior.points[correspondances[i].index_prior];
-        const Point& y = features.points[correspondances[i].index_new];
+    for (size_t i = 0; i < match_result.matches.size(); i++) {
+        const Point& y_prior = match_result.known_features->points[match_result.matches[i].index_known];
+        const Point& y = match_result.observed_features->points[match_result.matches[i].index_observed];
 
         linear_models[i] = feature_model.linearise(estimate.pose, y_prior, y);
     }

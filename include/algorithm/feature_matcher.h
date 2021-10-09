@@ -33,7 +33,7 @@ public:
         std::vector<Match> matches;
     };
 
-    void findMatches(Result& result)
+    void findMatches(const Pose& pose, Result& result)const
     {
         if (result.known_features == nullptr) return;
 
@@ -49,7 +49,7 @@ public:
 
                 double score_j;
                 if (config.use_feature_model) {
-                    score_j = feature_model.evaluateProbability(result.known_features->points[i], result.observed_features->points[i]);
+                    score_j = feature_model.evaluateProbability(pose, result.known_features->points[i], result.observed_features->points[i]);
                 } else {
                     // Score it as if we have a gaussian with identity covariance
                     score_j = std::exp(-(result.observed_features->points[i].descriptor - result.known_features->points[j].descriptor).squaredNorm());
