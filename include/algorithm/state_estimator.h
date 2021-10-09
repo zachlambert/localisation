@@ -67,7 +67,7 @@ protected:
 };
 
 
-class StateEstimatorEKF: public StateEstimator {
+class StateEstimatorEkf: public StateEstimator {
 public:
     GaussianStateEstimate estimate;
      // Public for rendering
@@ -75,80 +75,84 @@ public:
     PointCloud features_prior;
     std::vector<Correspondance> correspondances;
 
-    StateEstimatorEKF(
+    StateEstimatorEkf(
             const MotionModel& motion_model,
             const RangeModel& range_model,
             const FeatureModel& feature_model,
             const FeatureDetector& feature_detector,
-            const FeatureMatcher& feature_matcher):
-        StateEstimator(
-            motion_model,
-            range_model,
-            feature_model,
-            feature_detector,
-            feature_matcher)
-    {
-        addStep(std::bind(&StateEstimatorEKF::predict, this), "predict");
-        addStep(std::bind(&StateEstimatorEKF::feature_detection, this), "feature detection");
-        addStep(std::bind(&StateEstimatorEKF::feature_matching, this), "feature matching");
-        addStep(std::bind(&StateEstimatorEKF::update, this), "update");
-    }
+            const FeatureMatcher& feature_matcher);
 
-    virtual Pose getStateEstimate()const
-    {
-        return estimate.pose;
-    }
-
-    virtual void resetEstimate(const Pose& pose)
-    {
-        estimate.pose = pose;
-        estimate.covariance.setZero();
-    }
+    virtual Pose getStateEstimate()const;
+    virtual void resetEstimate(const Pose& pose);
 
 private:
-    bool predict()
-    {
-        auto f = motion_model.linearise(estimate.pose, *twistEstimate);
-        ekfPredict(estimate, f);
-        return true;
-    }
-
-    bool feature_detection()
-    {
-        correspondances.clear();
-        feature_detector.findFeatures(*ranges, features);
-        return true;
-    }
-
-    bool feature_matching()
-    {
-        terrain->getObservableLandmarks(estimate.pose, features_prior);
-        feature_matcher.getCorrespondances(correspondances, features, features_prior);
-        return true;
-    }
-
-    bool update()
-    {
-#if 1
-        std::vector<LinearisedObservationEquation> g(correspondances.size());
-        std::vector<Point> y(correspondances.size());
-        for (size_t i = 0; i < correspondances.size(); i++) {
-            g[i] = feature_model.linearise(estimate.pose, features_prior.points[correspondances[i].index_prior]);
-            y[i] = features.points[correspondances[i].index_new];
-        }
-        ekfUpdateMultiple(estimate, y, g);
-#else
-        LinearisedObservationEquation g;
-        for (size_t i = 0; i < correspondances.size(); i++) {
-            g = feature_model.linearise(estimate.pose, features_prior.points[correspondances[i].index_prior]);
-            ekfUpdate(estimate, features.points[correspondances[i].index_new], g);
-        }
-#endif
-        return true;
-    }
+    bool predict();
+    bool feature_detection();
+    bool feature_matching();
+    bool update();
 
 private:
     int step_number = 0;
 };
+
+
+class StateEstimatorHmm: public StateEstimator {
+public:
+    GaussianStateEstimate estimate;
+     // Public for rendering
+    PointCloud features;
+    PointCloud features_prior;
+    std::vector<Correspondance> correspondances;
+
+    StateEstimatorHmm(
+            const MotionModel& motion_model,
+            const RangeModel& range_model,
+            const FeatureModel& feature_model,
+            const FeatureDetector& feature_detector,
+            const FeatureMatcher& feature_matcher);
+
+    virtual Pose getStateEstimate()const;
+    virtual void resetEstimate(const Pose& pose);
+
+private:
+    bool predict();
+    bool feature_detection();
+    bool feature_matching();
+    bool update();
+
+private:
+    int step_number = 0;
+};
+
+
+/* TODO
+class StateEstimatorGrid: public StateEstimator {
+public:
+    GaussianStateEstimate estimate;
+     // Public for rendering
+    PointCloud features;
+    PointCloud features_prior;
+    std::vector<Correspondance> correspondances;
+
+    StateEstimatorGrid(
+            const MotionModel& motion_model,
+            const RangeModel& range_model,
+            const FeatureModel& feature_model,
+            const FeatureDetector& feature_detector,
+            const FeatureMatcher& feature_matcher);
+
+    virtual Pose getStateEstimate()const;
+    virtual void resetEstimate(const Pose& pose);
+
+private:
+    bool predict();
+    bool feature_detection();
+    bool feature_matching();
+    bool update();
+
+private:
+    int step_number = 0;
+};
+*/
 
 #endif

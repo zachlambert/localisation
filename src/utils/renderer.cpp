@@ -178,14 +178,6 @@ void drawStateEstimatorEKF(
         0.4,
         sf::Color::Green,
         state_estimator.getStateEstimate());
-    // Prior features
-    drawPointCloud(
-        window,
-        state_estimator.features_prior,
-        MarkerType::RING,
-        0.4,
-        sf::Color::Blue,
-        state_estimator.getStateEstimate());
 
     // Correspondances
     drawCorrespondances(
