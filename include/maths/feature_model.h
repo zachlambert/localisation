@@ -40,7 +40,7 @@ public:
 
             for (size_t j = 0; j < features.points[i].descriptor.size(); j++) {
                 double& value = features.points[i].descriptor(j);
-                value += sampleGaussian(0, config.descriptor_var); 
+                value += sampleGaussian(0, config.descriptor_var);
                 if (value < 0) value = 0;
             }
             // Renormalise so max value = 1
@@ -60,19 +60,20 @@ public:
         }
     }
 
-    double evaluateProbabilitySingle(const Point& yi, const Point& yi_mean)const
+    double evaluateProbability(const Point& y_prior, const Point& y)const
     {
         double p = 1;
-        p *= evaluateGaussian(yi.range, yi_mean.range, config.range_var);
-        double angle_dif = yi.angle - yi_mean.angle;
+        p *= evaluateGaussian(y.range, y_prior.range, config.range_var);
+        double angle_dif = y.angle - y_prior.angle;
         normaliseAngle(angle_dif);
         p *= evaluateGaussian(0, angle_dif, config.angle_var);
-        for (size_t j = 0; j < yi_mean.descriptor.size(); j++) {
-            p *= evaluateGaussian(yi.descriptor(j), yi_mean.descriptor(j), config.descriptor_var);
+        for (size_t j = 0; j < y_prior.descriptor.size(); j++) {
+            p *= evaluateGaussian(y.descriptor(j), y_prior.descriptor(j), config.descriptor_var);
         }
         return p;
     }
 
+#if 0 // Don't think I need this
     double evaluateProbability(const PointCloud& y, const PointCloud& y_prior, const std::vector<Correspondance>& correspondances)const
     {
         double p = 1;
@@ -83,6 +84,7 @@ public:
         }
         return p;
     }
+#endif
 
     LinearModelUpdate<3, Eigen::Dynamic> linearise(const Pose& x_prior, const Point& y_prior, const Point& y)const
     {

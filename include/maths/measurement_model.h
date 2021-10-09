@@ -6,7 +6,6 @@
 #include "maths/probability.h"
 #include "state/terrain.h"
 #include "algorithm/gaussian_methods.h"
-#include <iostream>
 
 
 class MeasurementModel {

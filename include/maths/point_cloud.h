@@ -36,20 +36,4 @@ struct PointCloud {
     // May need additional information later
 };
 
-inline Eigen::VectorXd getPointInnovation(const Point& y, const Point& y_predicted)
-{
-    Eigen::VectorXd dif = y.state() - y_predicted.state();
-    normaliseAngle(dif(1));
-    return dif;
-}
-
-struct Correspondance {
-    size_t index_prior; // Known map or previous observation
-    size_t index_new; // New observation
-    double score;
-    Correspondance(size_t index_prior, size_t index_new, double score):
-        index_prior(index_prior), index_new(index_new), score(score)
-    {}
-};
-
 #endif

@@ -1,6 +1,7 @@
 #ifndef ALGORITHM_FEATURE_MATCHER
 #define ALGORITHM_FEATURE_MATCHER
 
+#include "maths/feature_model.h"
 
 
 class FeatureMatcher {
@@ -15,19 +16,35 @@ public:
     };
     void setConfig(const Config& config) { this->config = config; }
 
-    void getCorrespondances(std::vector<Correspondance>& c, const PointCloud& y_new, const PointCloud& y_prior)const
+    struct Match {
+        size_t index_known;    // Known map or previous observation
+        size_t index_observed; // New observation
+        double score;
+        Match(size_t index_known, size_t index_observed, double score):
+            index_known(index_known), index_observed(index_observed), score(score)
+        {}
+    };
+
+    void getMatches(
+        const PointCloud& known_features,
+        const PointCloud& observed_features,
+        const std::vector<bool>& indicators, // Provides prior information on which saved features are feasible matches
+        std::vector<Match>& matches)
     {
-        c.clear();
-        for (size_t i = 0; i < y_new.points.size(); i++) {
+        matches.clear();
+        for (size_t i = 0; i < observed_features.points.size(); i++) {
             double score_best = 0;
             size_t j_best = 0;
-            for (size_t j = 0; j < y_prior.points.size(); j++) {
+
+            for (size_t j = 0; j < known_features.points.size(); j++) {
+                if (!indicators[j]) continue;
+
                 double score_j;
                 if (config.use_feature_model) {
-                    score_j = feature_model.evaluateProbabilitySingle(y_new.points[i], y_prior.points[j]);
+                    score_j = feature_model.evaluateProbability(known_features.points[i], observed_features.points[i]);
                 } else {
-                    // Score it as if we have a gaussian with idenity covariance
-                    score_j = std::exp(-(y_new.points[i].descriptor - y_prior.points[j].descriptor).squaredNorm());
+                    // Score it as if we have a gaussian with identity covariance
+                    score_j = std::exp(-(observed_features.points[i].descriptor - known_features.points[j].descriptor).squaredNorm());
                 }
                 if (score_j > score_best) {
                     score_best = score_j;
@@ -35,7 +52,7 @@ public:
                 }
             }
             if (score_best > config.correspondance_p_threshold) {
-                c.push_back(Correspondance(j_best, i, score_best));
+                matches.push_back(Match(j_best, i, score_best));
             }
         }
     }
