@@ -85,7 +85,7 @@ void drawPointCloud(
     for (const auto& point: point_cloud.points) {
         addMarker(
             vertex_array,
-            transformPoint(pose, point.pos()),
+            transformPoint(pose, point.pos),
             marker_type,
             color,
             size);
@@ -101,7 +101,7 @@ void drawPointCloud(
             double angle = j * segment_width;
             double outer_radius = inner_radius + descriptor_scaling * point_cloud.points[i].descriptor(j);
 
-            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos());
+            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos);
 
             Eigen::Vector2d dir = getDirection(angle);
             addSegmentSlice(
@@ -118,21 +118,19 @@ void drawPointCloud(
     window.draw(vertex_array);
 }
 
-void drawCorrespondances(
+void drawMatches(
     sf::RenderWindow& window,
-    const PointCloud& y_prior,
-    const PointCloud& y,
-    const std::vector<Correspondance>& correspondances,
-    sf::Color line_color,
-    const Pose& pose)
+    const Pose& pose,
+    const FeatureMatcher::Result& match_result,
+    sf::Color line_color)
 {
     sf::VertexArray vertex_array;
     vertex_array.setPrimitiveType(sf::Triangles);
-    for (size_t i = 0; i < correspondances.size(); i++) {
+    for (size_t i = 0; i < match_result.matches.size(); i++) {
         addLine(
             vertex_array,
-            y_prior.points[correspondances[i].index_prior].pos(),
-            y.points[correspondances[i].index_new].pos(),
+            match_result.known_features->points[match_result.matches[i].index_known].pos,
+            match_result.observed_features->points[match_result.matches[i].index_observed].pos,
             LineType::LINE,
             line_color,
             0.05);
@@ -161,9 +159,9 @@ void drawTarget(
     window.draw(vertex_array);
 }
 
-void drawStateEstimatorEKF(
+void drawStateEstimatorEkf(
     sf::RenderWindow& window,
-    const StateEstimatorEKF& state_estimator)
+    const StateEstimatorEkf& state_estimator)
 {
     drawPoseCovariance(
         window,
@@ -180,13 +178,11 @@ void drawStateEstimatorEKF(
         state_estimator.getStateEstimate());
 
     // Correspondances
-    drawCorrespondances(
+    drawMatches(
         window,
-        state_estimator.features_prior,
-        state_estimator.features,
-        state_estimator.correspondances,
-        sf::Color::Black,
-        state_estimator.getStateEstimate());
+        state_estimator.getStateEstimate(),
+        state_estimator.match_result,
+        sf::Color::Black);
 }
 
 void drawSim(sf::RenderWindow& window, const Sim& sim)
@@ -212,7 +208,7 @@ void drawSim(sf::RenderWindow& window, const Sim& sim)
     // Ranges in true frame
     drawPointCloud(
         window,
-        sim.range_sensor.ranges,
+        sim.sensor.ranges,
         MarkerType::CIRCLE,
         0.05,
         sf::Color::Blue,
@@ -225,8 +221,8 @@ void drawStateEstimator(
 {
     // Implementation specific rendering
 
-    if (const StateEstimatorEKF* ekf = dynamic_cast<const StateEstimatorEKF*>(&state_estimator)) {
-        drawStateEstimatorEKF(window, *ekf);
+    if (const StateEstimatorEkf* ekf = dynamic_cast<const StateEstimatorEkf*>(&state_estimator)) {
+        drawStateEstimatorEkf(window, *ekf);
     } else {
         // Not implemented
     }

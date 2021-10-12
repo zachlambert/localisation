@@ -6,13 +6,11 @@
 
 // ====== Terrain =====
 
-void Terrain::addElementLandmarks(const Element& element)
+void Terrain::addElementLandmarks(const Element& element, size_t descriptor_size)
 {
     for (const auto& vertex: element.vertices) {
         Eigen::VectorXd pos = element.pos + vertex;
-        double range = pos.norm();
-        double angle = std::atan2(pos.y(), pos.x());
-        landmarks.points.push_back(Point(range, angle, randomLandmarkDescriptor()));
+        landmarks.points.push_back(Point(pos, randomDescriptor(descriptor_size)));
     }
 }
 
@@ -68,32 +66,12 @@ double Terrain::queryIntersection(const Pose& pose, double angle)const
 }
 
 
-void Terrain::getObservableLandmarks(const Pose& pose, PointCloud& landmarks_out)const
-{
-    landmarks_out.points.clear();
-
-    static constexpr double intersection_allowance = 0.1;
-    for (size_t i = 0; i < landmarks.points.size(); i++) {
-
-        const Point& point = landmarks.points[i];
-        const Eigen::VectorXd& descriptor = landmarks.points[i].descriptor;
-
-        Eigen::Vector2d disp = point.pos() - pose.position();
-        double dist = disp.norm();
-        double angle = std::atan2(disp.y(), disp.x()) - pose.orientation();
-        double intersect_dist = queryIntersection(pose, angle);
-
-        if (dist < intersect_dist + intersection_allowance) {
-            landmarks_out.points.push_back(Point(dist, angle, descriptor));
-        }
-    }
-}
-
-
 // ===== Other functions =====
 
 void createTerrain(Terrain& terrain)
 {
+    size_t descriptor_size = 8;
+
     // Create bounding box, with overlapping edges at the corners for simplicity
     double inner_width = 8;
     double inner_height = 8;
@@ -145,7 +123,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(1.5, 0.8);
         element.addVertex(1.1, -1.2);
         terrain.elements.push_back(element);
-        terrain.addElementLandmarks(element);
+        terrain.addElementLandmarks(element, descriptor_size);
     }
 
     // Add detail to inner walls
@@ -157,7 +135,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-x1+0.15, -0.5*y1);
         element.addVertex(-x1, -y1);
         terrain.elements.push_back(element);
-        terrain.addElementLandmarks(element);
+        terrain.addElementLandmarks(element, descriptor_size);
     }
     { // Right
         Terrain::Element element;
@@ -167,7 +145,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(x1-0.2, 0.7*y1);
         element.addVertex(x1, y1);
         terrain.elements.push_back(element);
-        terrain.addElementLandmarks(element);
+        terrain.addElementLandmarks(element, descriptor_size);
     }
     { // Top
         Terrain::Element element;
@@ -177,7 +155,7 @@ void createTerrain(Terrain& terrain)
         element.addVertex(-0.4*x1, y1-0.1);
         element.addVertex(-x1, y1);
         terrain.elements.push_back(element);
-        terrain.addElementLandmarks(element);
+        terrain.addElementLandmarks(element, descriptor_size);
     }
     { // Bottom
         Terrain::Element element;
@@ -187,6 +165,6 @@ void createTerrain(Terrain& terrain)
         element.addVertex(0.5*x1, -y1+0.1);
         element.addVertex(x1, -y1);
         terrain.elements.push_back(element);
-        terrain.addElementLandmarks(element);
+        terrain.addElementLandmarks(element, descriptor_size);
     }
 }

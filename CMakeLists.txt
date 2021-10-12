@@ -15,6 +15,7 @@ find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 set(SRC
     src/main.cpp
+    src/algorithm/state_estimator/ekf.cpp
     src/maths/geometry.cpp
     src/maths/probability.cpp
     src/state/terrain.cpp

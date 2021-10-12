@@ -10,13 +10,12 @@
 #include "state/robot.h"
 #include "maths/measurement_model.h"
 
-class RangeSensor {
+class Sensor {
 public:
     PointCloud ranges;
-    PointCloud features;
 
-    RangeSensor(const RangeModel& range_model):
-        range_model(range_model)
+    Sensor(const MeasurementModel& measurement_model):
+        measurement_model(measurement_model)
     {}
 
     void setScanSize(size_t num_points)
@@ -28,13 +27,13 @@ public:
     {
         for (size_t i = 0; i < ranges.points.size(); i++) {
             double angle = i*2*M_PI / ranges.points.size();
-            ranges.points[i].range = range_model.sample(angle, robot.pose, terrain);
-            ranges.points[i].angle = angle;
+            double range = measurement_model.sample(robot.pose, angle, terrain);
+            ranges.points[i].setPolar(range, angle);
         }
     }
 
 private:
-    const RangeModel& range_model;
+    const MeasurementModel& measurement_model;
 };
 
 #endif

@@ -47,7 +47,7 @@ public:
         if (!state_estimator.started()) {
             state_estimator.start(
                 &sim.robot.twistEstimate,
-                &sim.range_sensor.features,
+                &sim.sensor.ranges,
                 &sim.terrain
             );
         }

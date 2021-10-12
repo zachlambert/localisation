@@ -42,7 +42,7 @@ public:
 
         return true;
     }
-    
+
     void setTarget(const Pose& target) { this->target = target; }
     Pose getTarget()const { return target; }
 

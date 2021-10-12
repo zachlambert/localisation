@@ -9,10 +9,10 @@
 
 
 // ===== How the motion model works =====
-// 
+//
 // Input = Twist estimate (velocity * dt) over the given interval.
 // This can come from (mean velocity * dt) or (J * delta_q)
-// 
+//
 // The input has no associated uncertainty. If we receive input from
 // encoders, they have no uncertainty. If we receive it from a state
 // estimator, the uncertainties used there define the relative confidence

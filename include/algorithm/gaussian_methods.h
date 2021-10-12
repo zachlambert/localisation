@@ -72,7 +72,7 @@ static void ekfUpdateMultiple(
 
     for (size_t i = 0; i < lms.size(); i++) {
         const LinearModelUpdate<Nx, Ny>& lm = lms[i];
-        eta += lm.C.transpose() * lm.R.inverse * lm.innovation;
+        eta += lm.C.transpose() * lm.R.inverse() * lm.innovation;
         Omega += lm.C.transpose() * lm.R.inverse() * lm.C;
     }
 

@@ -33,6 +33,7 @@ public:
         PointCloud& features)const
     {
         features.points.clear();
+        if (measurements.points.empty()) return;
 
         const PointCloud* known_features;
         std::vector<bool> indicators;

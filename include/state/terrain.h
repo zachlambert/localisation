@@ -31,7 +31,7 @@ public:
     std::vector<Element> elements;
     PointCloud landmarks;
 
-    void addElementLandmarks(const Element& element);
+    void addElementLandmarks(const Element& element, size_t descriptor_size);
     double queryIntersection(const Pose& pose, double angle)const;
 
     void queryKnownFeatures(const Pose& pose, const PointCloud*& known_features, std::vector<bool>& indicators)const

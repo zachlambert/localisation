@@ -49,7 +49,7 @@ public:
         return (1 - prob_inf) * p_y;
     }
 
-    double sample(double angle, const Pose& pose, const Terrain& terrain)const
+    double sample(const Pose& pose, double angle, const Terrain& terrain)const
     {
         double range_hit = terrain.queryIntersection(pose, angle);
 

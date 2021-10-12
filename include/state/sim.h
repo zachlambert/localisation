@@ -10,16 +10,17 @@ class Sim {
 public:
     Terrain terrain;
     Robot robot;
-    RangeSensor range_sensor;
+    Sensor sensor;
 
-    Sim(const MotionModel& motion_model, const RangeModel& range_model):
+    Sim(const MotionModel& motion_model, const MeasurementModel& measurement_model):
         robot(motion_model),
-        range_sensor(range_model)
+        sensor(measurement_model)
     {}
+
     void step(double dt, const Velocity& robot_command)
     {
         robot.step(robot_command, dt);
-        range_sensor.sample(terrain, robot);
+        sensor.sample(terrain, robot);
     }
 };
 

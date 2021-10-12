@@ -24,6 +24,7 @@ public:
 
         Point feature;
         feature.setPolar(range, angle);
+        feature.descriptor = known_feature.descriptor;
 
         for (size_t j = 0; j < feature.descriptor.size(); j++) {
             double& value = feature.descriptor(j);
