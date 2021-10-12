@@ -52,14 +52,17 @@ bool StateEstimatorEkf::feature_detection()
 
 bool StateEstimatorEkf::feature_matching()
 {
-    terrain->queryKnownFeatures(estimate.pose, match_result.known_features, match_result.indicators);
+    terrain->queryKnownFeatures(
+        estimate.pose,
+        match_result.known_features,
+        match_result.indicators);
     feature_matcher.findMatches(estimate.pose, match_result);
     return true;
 }
 
 bool StateEstimatorEkf::update()
 {
-    std::vector<LinearModelUpdate<3, Eigen::Dynamic>> linear_models(match_result.matches.size());
+    std::vector<LinearModelUpdate<3, 2>> linear_models(match_result.matches.size());
     std::vector<Point> y(match_result.matches.size());
 
     for (size_t i = 0; i < match_result.matches.size(); i++) {

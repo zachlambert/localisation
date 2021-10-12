@@ -6,10 +6,10 @@
 void drawPoseCovariance(
     sf::RenderWindow& window,
     const Pose& pose,
-    const Eigen::Matrix3d& cov)
+    const Eigen::Matrix3d& cov,
+    const double std_position_scaling=3,
+    const double std_orientation_scaling=3)
 {
-    const double std_position_scaling = 3;
-    const double std_orientation_scaling = 3;
 
     sf::VertexArray vertex_array;
     vertex_array.setPrimitiveType(sf::Triangles);
@@ -249,6 +249,30 @@ void drawStateEstimatorEkf(
         sf::Color::Black);
 }
 
+void drawStateEstimatorMht(
+    sf::RenderWindow& window,
+    const StateEstimatorMht& state_estimator)
+{
+    for (auto& component: state_estimator.components) {
+        double scale;
+        if (component.log_likelihood < -100) {
+            scale = 0.1;
+        } else {
+            scale = 0.1 + 0.9 * (component.log_likelihood + 100) / (-100);
+        }
+
+        drawPoseCovariance(
+            window,
+            component.pose,
+            component.covariance,
+            3 * scale,
+            3 * scale);
+
+        // Don't bother drawing features or correspondances - will be too clutterred.
+        // Use standard EKF to observe how these behave
+    }
+}
+
 void drawSim(sf::RenderWindow& window, const Sim& sim)
 {
     // Terrain
@@ -287,6 +311,8 @@ void drawStateEstimator(
 
     if (const StateEstimatorEkf* ekf = dynamic_cast<const StateEstimatorEkf*>(&state_estimator)) {
         drawStateEstimatorEkf(window, *ekf);
+    } else if (const StateEstimatorMht* mht = dynamic_cast<const StateEstimatorMht*>(&state_estimator)) {
+        drawStateEstimatorMht(window, *mht);
     } else {
         // Not implemented
     }

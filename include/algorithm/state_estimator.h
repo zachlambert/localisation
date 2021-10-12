@@ -99,21 +99,17 @@ private:
 };
 
 
-/* TODO
 class StateEstimatorMht: public StateEstimator {
 public:
-    struct Estimate {
-        struct Component {
-            Pose pose;
-            Eigen::Matrix3d covariance;
-            double probability;
-        };
-        std::vector<Component> components;
+    struct Component {
+        Pose pose;
+        Eigen::Matrix3d covariance;
+        double log_likelihood;
+        FeatureMatcher::Result match_result;
     };
 
-    Estimate estimate;
     PointCloud features;
-    std::vector<FeatureMatcher::Result> match_results;
+    std::vector<Component> components;
 
     StateEstimatorMht(
             const MotionModel& motion_model,
@@ -130,12 +126,12 @@ private:
     bool feature_detection();
     bool feature_matching();
     bool update();
+    bool prune();
 
-    void sampleInitialComponent(Pose& pose, Eigen::Matrix3d& cov)const;
+    void sampleInitialComponent(const Pose& mean, Pose& pose, Eigen::Matrix3d& cov)const;
 
     int step_number = 0;
 };
-*/
 
 /* TODO
 class StateEstimatorGrid: public StateEstimator {

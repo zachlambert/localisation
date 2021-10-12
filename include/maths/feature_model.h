@@ -53,27 +53,20 @@ public:
         return p;
     }
 
-    LinearModelUpdate<3, Eigen::Dynamic> linearise(const Pose& x_prior, const Point& y_prior, const Point& y)const
+    LinearModelUpdate<3, 2> linearise(const Pose& x_prior, const Point& y_prior, const Point& y)const
     {
-        LinearModelUpdate<3, Eigen::Dynamic> linear_model;
+        LinearModelUpdate<3, 2> linear_model;
         size_t Ny = y_prior.state().size();
 
-        linear_model.C.resize(Ny, 3);
-        linear_model.R.resize(Ny, Ny);
-        linear_model.R.setZero();
 
-        Eigen::VectorXd dir = y_prior.pos - x_prior.position();
+        Eigen::Vector2d dir = y_prior.pos - x_prior.position();
         dir.normalize();
 
-        linear_model.C.setZero();
         linear_model.C.block(0, 0, 1, 2) = - dir.transpose();
         linear_model.C.block(1, 0, 1, 2) = - (crossProductMatrix(1) * dir).transpose() / y_prior.range(x_prior);
-        linear_model.C(1, 2) = -1;
+        linear_model.C.block(0, 2, 2, 1) = Eigen::Vector2d(0, -1);
 
-        linear_model.R(0, 0) = config.range_var;
-        linear_model.R(1, 1) = config.angle_var;
-        linear_model.R.block(2, 2, Ny-2, Ny-2).setIdentity();
-        linear_model.R.block(2, 2, Ny-2, Ny-2) *= config.descriptor_var;
+        linear_model.R = Eigen::Vector2d(config.range_var, config.angle_var).asDiagonal();
 
         linear_model.innovation = y.state() - y_prior.state(x_prior);
         normaliseAngle(linear_model.innovation(1));

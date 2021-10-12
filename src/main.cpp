@@ -35,9 +35,9 @@ int main()
     FeatureModel feature_model;
     {
         FeatureModel::Config config;
-        config.range_var = std::pow(0.1, 2);
-        config.angle_var = std::pow(0.05, 2);
-        config.descriptor_var = std::pow(0.1, 2);
+        config.range_var = std::pow(0.8, 2);
+        config.angle_var = std::pow(0.4, 2);
+        config.descriptor_var = std::pow(0.8, 2);
 
         feature_model.setConfig(config);
     }
@@ -56,7 +56,17 @@ int main()
 
     // ===== Configure algorithms =====
 
-    FeatureDetectorFake feature_detector(sim.terrain, sim.robot, feature_model);
+    FeatureModel fake_feature_model;
+    {
+        FeatureModel::Config config;
+        config.range_var = std::pow(0.1, 2);
+        config.angle_var = std::pow(0.05, 2);
+        config.descriptor_var = std::pow(0.1, 2);
+
+        feature_model.setConfig(config);
+    }
+
+    FeatureDetectorFake feature_detector(sim.terrain, sim.robot, fake_feature_model);
     {
         FeatureDetectorFake::Config config;
         config.false_negative_p = 0.1;
@@ -73,7 +83,7 @@ int main()
         feature_matcher.setConfig(config);
     }
 
-    StateEstimatorEkf state_estimator(
+    StateEstimatorMht state_estimator(
         motion_model,
         measurement_model,
         feature_model,

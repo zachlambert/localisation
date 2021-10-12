@@ -72,60 +72,73 @@ static void ekfUpdateMultiple(
 
     for (size_t i = 0; i < lms.size(); i++) {
         const LinearModelUpdate<Nx, Ny>& lm = lms[i];
-        eta += lm.C.transpose() * lm.R.inverse() * lm.innovation;
-        Omega += lm.C.transpose() * lm.R.inverse() * lm.C;
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Rinv = lm.R.inverse();
+        eta += lm.C.transpose() * Rinv * lm.innovation;
+        Omega += lm.C.transpose() * Rinv * lm.C;
     }
 
     // The final state is the optimal value of (x - x_prior) so add this to prior state
-    x += Omega.inverse() * eta;
     cov = Omega.inverse();
+    x += cov * eta;
 }
 
 
 template <int Nx, int Ny>
-void updateComponentLikelihood(
-    double& probability,
-    const Eigen::Matrix<double, Nx, Nx>& cov_prior,
+void ekfUpdateMultipleWithLikelihood(
+    Eigen::Matrix<double, Nx, 1>& x,
+    Eigen::Matrix<double, Nx, Nx>& cov,
+    double& log_likelihood,
     const std::vector<LinearModelUpdate<Nx, Ny>>& lms)
 {
     typedef Eigen::Matrix<double, Nx, 1> x_t;
     typedef Eigen::Matrix<double, Nx, Nx> cov_t;
 
-    // Get the mean and covariance from the update step
+    if (cov.determinant() == 0) return;
+    if (lms.empty()) return;
+
     x_t eta;
     eta.setZero();
     cov_t Omega;
-    Omega = cov_prior.inverse();
+    Omega = cov.inverse();
 
     double k = 0;
-    double denominator_sq = 1;
-
-    double two_pi_pow_Ny = std::pow(2*M_PI, Ny);
 
     for (size_t i = 0; i < lms.size(); i++) {
         const LinearModelUpdate<Nx, Ny>& lm = lms[i];
 
-        // Need to get final mean and covariance
-        x_t eta_i = lm.C.tranpose() * lm.R.inverse * lm.innovation;
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> Rinv = lm.R.inverse();
+
+        x_t eta_i = lm.C.transpose() * Rinv * lm.innovation;
         eta += eta_i;
-        cov_t Omega_i = lm.C.transpose() * lm.R.inverse() * lm.C;
+        cov_t Omega_i = lm.C.transpose() * Rinv * lm.C;
         Omega += Omega_i;
 
-        // Use k in the expression for the updated probability
-        cov_t Sigma_i = Omega_i.inverse();
+        // Omega_i may be singular (if rank(C) < state dimension), so need to be careful with the below part.
+        // 1. Use the pseudoinverse of Omega to get Sigma.
+        // 2. Use the product of non-zero eigenvectors instead of determinant.
+        // Need to look at maths in more detail for handling this degenerate case, but my hand-wavy reasoning
+        // is that the unobservable state component gets infinite variance. This has no effect on the probability.
+        // The effect on k would be (+infinity -infinity = 0), but we can't represent this with floats.
+        // Threfore, ignore the unobservable state completely by using the pseudoinverse and ignoring factor of 0 in the determinant.
+
+
+        Eigen::CompleteOrthogonalDecomposition<cov_t> decomposition = Omega_i.completeOrthogonalDecomposition();
+
+        cov_t Sigma_i = decomposition.pseudoInverse();
         k += eta_i.transpose() * Sigma_i * eta_i;
 
-        // Also get the product of determinants of Sigma_i
-        denominator_sq *= Sigma_i.determinant() * two_pi_pow_Ny;
+        double nonSingularDeterminant = std::abs(decomposition.matrixT().determinant());
+        k += -std::log(nonSingularDeterminant) + Ny*std::log(2*M_PI);
+        // Equivalent to: denominator *= std::sqrt(Sigma_i.determinant() * two_pi_pow_Ny);
     }
 
-    cov_t Sigma = Omega.inverse();
-    k -= eta.transpose() * Sigma * eta;
+    cov = Omega.inverse();
+    x += cov * eta;
 
-    double numerator_sq = Sigma.determinant() * two_pi_pow_Ny;
-    double update_gain = std::sqrt(numerator_sq/denominator_sq) * std::exp(-0.5*k);
+    k -= eta.transpose() * cov * eta;
+    k -= std::log(cov.determinant()) + Ny*std::log(2*M_PI);
 
-    probability *= update_gain;
+    log_likelihood -= 0.5*k;
 }
 
 #endif

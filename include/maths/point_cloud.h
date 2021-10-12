@@ -34,12 +34,10 @@ struct Point {
         return std::atan2(disp.y(), disp.x());
     }
 
-    Eigen::VectorXd state(const Pose& frame=Pose())const {
-        Eigen::VectorXd yi;
-        yi.resize(2 + descriptor.size());
+    Eigen::Vector2d state(const Pose& frame=Pose())const {
+        Eigen::Vector2d yi;
         yi(0) = range(frame);
         yi(1) = angle(frame);
-        yi.tail(descriptor.size()) = descriptor;
         return yi;
     }
 };
