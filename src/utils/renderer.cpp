@@ -118,25 +118,79 @@ void drawPointCloud(
     window.draw(vertex_array);
 }
 
+void drawPointCloudWithIndicators(
+    sf::RenderWindow& window,
+    const PointCloud& point_cloud,
+    const std::vector<bool>& indicators,
+    MarkerType marker_type,
+    double size,
+    sf::Color color,
+    const Pose& pose = Pose())
+{
+    bool use_indicators = (indicators.size() == point_cloud.points.size());
+
+    sf::VertexArray vertex_array;
+    vertex_array.setPrimitiveType(sf::Triangles);
+    for (size_t i = 0; i < point_cloud.points.size(); i++) {
+        if (use_indicators && !indicators[i]) continue;
+        addMarker(
+            vertex_array,
+            transformPoint(pose, point_cloud.points[i].pos),
+            marker_type,
+            color,
+            size);
+    }
+
+    // Also add descriptors. If not used, size = 0
+    double descriptor_scaling = 0.8;
+    for (size_t i = 0; i < point_cloud.points.size(); i++) {
+        if (use_indicators && !indicators[i]) continue;
+
+        double inner_radius = size*0.5;
+        double segment_width = 2*M_PI / point_cloud.points[i].descriptor.size();
+
+        for (size_t j = 0; j < point_cloud.points[i].descriptor.size(); j++) {
+            double angle = j * segment_width;
+            double outer_radius = inner_radius + descriptor_scaling * point_cloud.points[i].descriptor(j);
+
+            Eigen::Vector2d position = transformPoint(pose, point_cloud.points[i].pos);
+
+            Eigen::Vector2d dir = getDirection(angle);
+            addSegmentSlice(
+                vertex_array,
+                position,
+                angle,
+                inner_radius,
+                outer_radius,
+                segment_width * 0.5,
+                color);
+        }
+    }
+
+    window.draw(vertex_array);
+}
+
 void drawMatches(
     sf::RenderWindow& window,
     const Pose& pose,
     const FeatureMatcher::Result& match_result,
     sf::Color line_color)
 {
+    if (!match_result.known_features || !match_result.observed_features) return;
+
     sf::VertexArray vertex_array;
     vertex_array.setPrimitiveType(sf::Triangles);
     for (size_t i = 0; i < match_result.matches.size(); i++) {
         addLine(
             vertex_array,
             match_result.known_features->points[match_result.matches[i].index_known].pos,
-            match_result.observed_features->points[match_result.matches[i].index_observed].pos,
+            transformPoint(pose, match_result.observed_features->points[match_result.matches[i].index_observed].pos),
             LineType::LINE,
             line_color,
             0.05);
     }
 
-    window.draw(vertex_array, getRenderTransform(pose));
+    window.draw(vertex_array);
 }
 
 // Target
@@ -176,6 +230,16 @@ void drawStateEstimatorEkf(
         0.4,
         sf::Color::Green,
         state_estimator.getStateEstimate());
+    if (state_estimator.match_result.known_features) {
+        drawPointCloudWithIndicators(
+            window,
+            *state_estimator.match_result.known_features,
+            state_estimator.match_result.indicators,
+            MarkerType::RING,
+            0.4,
+            sf::Color::Blue,
+            Pose());
+    }
 
     // Correspondances
     drawMatches(

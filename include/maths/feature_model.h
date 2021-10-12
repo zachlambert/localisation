@@ -62,7 +62,7 @@ public:
         linear_model.R.resize(Ny, Ny);
         linear_model.R.setZero();
 
-        Eigen::VectorXd dir = Eigen::Rotation2Dd(x_prior.orientation()) * (y_prior.pos - x_prior.position());
+        Eigen::VectorXd dir = y_prior.pos - x_prior.position();
         dir.normalize();
 
         linear_model.C.setZero();
@@ -75,7 +75,7 @@ public:
         linear_model.R.block(2, 2, Ny-2, Ny-2).setIdentity();
         linear_model.R.block(2, 2, Ny-2, Ny-2) *= config.descriptor_var;
 
-        linear_model.innovation = y.state() - y_prior.state();
+        linear_model.innovation = y.state() - y_prior.state(x_prior);
         normaliseAngle(linear_model.innovation(1));
 
         return linear_model;

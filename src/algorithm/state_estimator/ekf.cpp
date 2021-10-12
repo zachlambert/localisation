@@ -41,6 +41,10 @@ bool StateEstimatorEkf::predict()
 
 bool StateEstimatorEkf::feature_detection()
 {
+    // Reset match result, so it doesn't render old information
+    match_result.matches.clear();
+    match_result.known_features = nullptr;
+
     feature_detector.findFeatures(*ranges, features);
     match_result.observed_features = &features;
     return true;
