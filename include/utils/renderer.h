@@ -20,7 +20,9 @@ public:
         state(state),
         camera(camera),
         window(window)
-    {}
+    {
+        vertex_array.setPrimitiveType(sf::PrimitiveType::Triangles);
+    }
 
     void render();
 
@@ -28,6 +30,7 @@ private:
     const State& state;
     Camera& camera;
     sf::RenderWindow& window;
+    sf::VertexArray vertex_array;
 };
 
 #endif

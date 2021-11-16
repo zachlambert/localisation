@@ -4,62 +4,49 @@
 
 
 void drawPoseCovariance(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const Pose& pose,
     const Eigen::Matrix3d& cov,
     const double std_position_scaling=3,
     const double std_orientation_scaling=3)
 {
-
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
-
     addCovarianceEllipse(
         vertex_array,
+        pose,
         cov.block<2,2>(0,0),
         std_position_scaling,
         sf::Color::Green);
     addSegment(
         vertex_array,
-        Eigen::Vector2d(0, 0),
+        pose.position(),
         pose.orientation(),
         0.5,
         std_orientation_scaling * std::sqrt(cov(2,2)),
         sf::Color::Cyan);
-
-    sf::Transform transform;
-    transform.translate(pose.position().x(), pose.position().y());
-    window.draw(vertex_array, transform);
 }
 
 void drawPose(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const Pose& pose,
     double size,
     sf::Color color)
 {
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
-    addEllipse(vertex_array, size, size, 0, color);
+    addEllipse(vertex_array, pose.position(), size, size, 0, color);
     addLine(
         vertex_array,
-        Eigen::Vector2d(0, 0),
-        Eigen::Vector2d(1.5*size, 0),
+        pose.position(),
+        pose.position() + 1.5*size*getDirection(pose.orientation()),
         LineType::ARROW,
         color,
         size*0.33);
-
-    window.draw(vertex_array, getRenderTransform(pose));
 }
 
 void drawTerrain(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const Terrain& terrain)
 {
     const sf::Color color(150, 150, 150);
 
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
     for (const auto& element: terrain.elements) {
         addMesh(
             vertex_array,
@@ -68,20 +55,16 @@ void drawTerrain(
             color
         );
     }
-
-    window.draw(vertex_array);
 }
 
 void drawPointCloud(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const PointCloud& point_cloud,
     MarkerType marker_type,
     double size,
     sf::Color color,
     const Pose& pose = Pose())
 {
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
     for (const auto& point: point_cloud.points) {
         addMarker(
             vertex_array,
@@ -114,12 +97,10 @@ void drawPointCloud(
                 color);
         }
     }
-
-    window.draw(vertex_array);
 }
 
 void drawPointCloudWithIndicators(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const PointCloud& point_cloud,
     const std::vector<bool>& indicators,
     MarkerType marker_type,
@@ -129,8 +110,6 @@ void drawPointCloudWithIndicators(
 {
     bool use_indicators = (indicators.size() == point_cloud.points.size());
 
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
     for (size_t i = 0; i < point_cloud.points.size(); i++) {
         if (use_indicators && !indicators[i]) continue;
         addMarker(
@@ -166,20 +145,16 @@ void drawPointCloudWithIndicators(
                 color);
         }
     }
-
-    window.draw(vertex_array);
 }
 
 void drawMatches(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const Pose& pose,
     const FeatureMatcher::Result& match_result,
     sf::Color line_color)
 {
     if (!match_result.known_features || !match_result.observed_features) return;
 
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
     for (size_t i = 0; i < match_result.matches.size(); i++) {
         addLine(
             vertex_array,
@@ -189,50 +164,44 @@ void drawMatches(
             line_color,
             0.05);
     }
-
-    window.draw(vertex_array);
 }
 
 // Target
 void drawTarget(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const Pose& pose,
     double size,
     sf::Color color)
 {
-    sf::VertexArray vertex_array;
-    vertex_array.setPrimitiveType(sf::Triangles);
-
     addMarker(
         vertex_array,
         pose.position(),
         MarkerType::CROSS,
         color,
         size);
-
-    window.draw(vertex_array);
 }
 
 void drawStateEstimatorEkf(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const StateEstimatorEkf& state_estimator)
 {
     drawPoseCovariance(
-        window,
+        vertex_array,
         state_estimator.estimate.pose,
         state_estimator.estimate.covariance);
 
     // Detected features
     drawPointCloud(
-        window,
+        vertex_array,
         state_estimator.features,
         MarkerType::RING,
         0.4,
         sf::Color::Green,
         state_estimator.getStateEstimate());
+
     if (state_estimator.match_result.known_features) {
         drawPointCloudWithIndicators(
-            window,
+            vertex_array,
             *state_estimator.match_result.known_features,
             state_estimator.match_result.indicators,
             MarkerType::RING,
@@ -243,14 +212,14 @@ void drawStateEstimatorEkf(
 
     // Correspondances
     drawMatches(
-        window,
+        vertex_array,
         state_estimator.getStateEstimate(),
         state_estimator.match_result,
         sf::Color::Black);
 }
 
 void drawStateEstimatorMht(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const StateEstimatorMht& state_estimator)
 {
     for (auto& component: state_estimator.components) {
@@ -262,7 +231,7 @@ void drawStateEstimatorMht(
         }
 
         drawPoseCovariance(
-            window,
+            vertex_array,
             component.pose,
             component.covariance,
             3 * scale,
@@ -273,14 +242,14 @@ void drawStateEstimatorMht(
     }
 }
 
-void drawSim(sf::RenderWindow& window, const Sim& sim)
+void drawSim(sf::VertexArray& vertex_array, const Sim& sim)
 {
     // Terrain
     drawTerrain(
-        window,
+        vertex_array,
         sim.terrain);
     drawPointCloud(
-        window,
+        vertex_array,
         sim.terrain.landmarks,
         MarkerType::SQUARE,
         0.2,
@@ -288,14 +257,14 @@ void drawSim(sf::RenderWindow& window, const Sim& sim)
 
     // Robot
     drawPose(
-        window,
+        vertex_array,
         sim.robot.pose,
         0.2,
         sf::Color::Red);
 
     // Ranges in true frame
     drawPointCloud(
-        window,
+        vertex_array,
         sim.sensor.ranges,
         MarkerType::CIRCLE,
         0.05,
@@ -304,34 +273,34 @@ void drawSim(sf::RenderWindow& window, const Sim& sim)
 }
 
 void drawStateEstimator(
-    sf::RenderWindow& window,
+    sf::VertexArray& vertex_array,
     const StateEstimator& state_estimator)
 {
     // Implementation specific rendering
 
     if (const StateEstimatorEkf* ekf = dynamic_cast<const StateEstimatorEkf*>(&state_estimator)) {
-        drawStateEstimatorEkf(window, *ekf);
+        drawStateEstimatorEkf(vertex_array, *ekf);
     } else if (const StateEstimatorMht* mht = dynamic_cast<const StateEstimatorMht*>(&state_estimator)) {
-        drawStateEstimatorMht(window, *mht);
+        drawStateEstimatorMht(vertex_array, *mht);
     } else {
         // Not implemented
     }
 
     // State estimate
     drawPose(
-        window,
+        vertex_array,
         state_estimator.getStateEstimate(),
         0.2,
         sf::Color::Black);
 }
 
-void drawController(sf::RenderWindow& window, const Controller& controller)
+void drawController(sf::VertexArray& vertex_array, const Controller& controller)
 {
     // No implementation specific rendering
 
     // Target
     drawTarget(
-        window,
+        vertex_array,
         controller.getTarget(),
         0.2,
         sf::Color::Black);
@@ -341,6 +310,7 @@ void drawController(sf::RenderWindow& window, const Controller& controller)
 void Renderer::render()
 {
     window.clear(sf::Color::White);
+    vertex_array.clear();
 
     sf::View view;
     view.setCenter(camera.position.x(), camera.position.y());
@@ -348,9 +318,10 @@ void Renderer::render()
     view.zoom(1.0/camera.scale);
     window.setView(view);
 
-    drawSim(window, state.sim);
-    drawStateEstimator(window, state.state_estimator);
-    drawController(window, state.controller);
+    drawSim(vertex_array, state.sim);
+    drawStateEstimator(vertex_array, state.state_estimator);
+    drawController(vertex_array, state.controller);
 
+    window.draw(vertex_array);
     window.display();
 }

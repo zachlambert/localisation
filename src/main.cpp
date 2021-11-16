@@ -83,7 +83,7 @@ int main()
         feature_matcher.setConfig(config);
     }
 
-    StateEstimatorMht state_estimator(
+    StateEstimatorEkf state_estimator(
         motion_model,
         measurement_model,
         feature_model,

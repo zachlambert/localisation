@@ -51,6 +51,7 @@ void addLine(
 
 void addEllipse(
     sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& origin,
     double width,
     double height,
     double angle,
@@ -58,6 +59,7 @@ void addEllipse(
 
 void addCovarianceEllipse(
     sf::VertexArray& vertex_array,
+    const Pose& pose,
     const Eigen::Matrix2d& cov,
     double scaling,
     sf::Color color);

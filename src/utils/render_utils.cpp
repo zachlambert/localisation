@@ -340,6 +340,7 @@ void addLine(
 
 void addEllipse(
     sf::VertexArray& vertex_array,
+    const Eigen::Vector2d& origin,
     double width,
     double height,
     double orientation,
@@ -358,14 +359,16 @@ void addEllipse(
         double angle = i*2*M_PI / n;
         double angle2 = ((i+1)%n)*2*M_PI / n;
         addTriangle(vertex_array, color,
-            Eigen::Vector2d(0, 0),
-            get_point(angle),
-            get_point(angle2));
+            origin,
+            origin + get_point(angle),
+            origin + get_point(angle2)
+        );
     }
 }
 
 void addCovarianceEllipse(
     sf::VertexArray& vertex_array,
+    const Pose& pose,
     const Eigen::Matrix2d& cov,
     double std_scaling,
     sf::Color color)
@@ -379,7 +382,7 @@ void addCovarianceEllipse(
     double angle = std::atan2(u1.y(), u1.x());
     double width = std::sqrt(v1) * std_scaling;
     double height = std::sqrt(v2) * std_scaling;
-    addEllipse(vertex_array, width, height, angle, color);
+    addEllipse(vertex_array, pose.position(), width, height, pose.orientation() + angle, color);
 }
 
 void addSegment(
